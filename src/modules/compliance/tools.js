@@ -1,4 +1,4 @@
-// compliance/tools.js — Compliance & Audit Trail tool definitions and handlers
+// compliance/tools.js - Compliance & Audit Trail tool definitions and handlers
 import {
   Client,
   AccountId,

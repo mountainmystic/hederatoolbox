@@ -1,7 +1,8 @@
-// hcs/intelligence.js — GPT-4o Mini analysis engine
+// hcs/intelligence.js - GPT-4o Mini analysis engine
 import OpenAI from "openai";
 
 let openai;
+
 function getOpenAI() {
   if (!openai) openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   return openai;

@@ -1,4 +1,4 @@
-// hcs/tools.js — HCS Topic Intelligence tool definitions and handlers
+// hcs/tools.js - HCS Topic Intelligence tool definitions and handlers
 import { getTopicInfo, getTopicMessages } from "./hedera.js";
 import { analyzeMessages, deepAnalyze } from "./intelligence.js";
 import { chargeForTool } from "../../payments.js";
@@ -6,7 +6,7 @@ import { chargeForTool } from "../../payments.js";
 export const HCS_TOOL_DEFINITIONS = [
   {
     name: "hcs_monitor",
-    description: "Get current status and metadata of any HCS topic — message count, creation time, memo, and recent activity. Free to call.",
+    description: "Get current status and metadata of any HCS topic - message count, creation time, memo, and recent activity. Free to call.",
     inputSchema: {
       type: "object",
       properties: {
@@ -32,7 +32,7 @@ export const HCS_TOOL_DEFINITIONS = [
   },
   {
     name: "hcs_understand",
-    description: "Deep pattern analysis of an HCS topic — anomaly detection, trend analysis, entity extraction, or risk assessment. Costs 0.50 HBAR.",
+    description: "Deep pattern analysis of an HCS topic - anomaly detection, trend analysis, entity extraction, or risk assessment. Costs 0.50 HBAR.",
     inputSchema: {
       type: "object",
       properties: {

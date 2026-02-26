@@ -1,4 +1,4 @@
-// hcs/hedera.js — Hedera mirror node integration
+// hcs/hedera.js - Hedera mirror node integration
 import axios from "axios";
 
 function getMirrorNodeBase() {
@@ -18,10 +18,8 @@ export async function getTopicMessages(topicId, limit = 50, since = null) {
   const base = getMirrorNodeBase();
   let url = `${base}/api/v1/topics/${topicId}/messages?limit=${limit}&order=desc`;
   if (since) url += `&timestamp=gte:${since}`;
-
   const response = await axios.get(url);
   const messages = response.data.messages || [];
-
   return messages.map((msg) => ({
     sequence_number: msg.sequence_number,
     consensus_timestamp: msg.consensus_timestamp,

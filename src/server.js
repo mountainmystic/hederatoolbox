@@ -1,10 +1,9 @@
-// server.js — MCP server factory, registers all module tools
+// server.js - MCP server factory, registers all module tools
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-
 import { HCS_TOOL_DEFINITIONS, executeHCSTool } from "./modules/hcs/tools.js";
 import { COMPLIANCE_TOOL_DEFINITIONS, executeComplianceTool } from "./modules/compliance/tools.js";
 
@@ -35,15 +34,15 @@ export function createServer() {
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
-    console.error(`\n?? Tool: ${name}`);
+    console.error("Tool: " + name);
     try {
       const result = await routeTool(name, args);
-      console.error(`? Done: ${name}`);
+      console.error("Done: " + name);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       };
     } catch (error) {
-      console.error(`? Error: ${name} — ${error.message}`);
+      console.error("Error: " + name + " - " + error.message);
       return {
         content: [
           {

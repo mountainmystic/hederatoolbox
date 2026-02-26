@@ -1,9 +1,8 @@
-// index.js — Main entry point with stdio and Streamable HTTP transport
+// index.js - Main entry point with stdio and Streamable HTTP transport
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import http from "http";
 import "dotenv/config";
-
 import { createServer, ALL_TOOLS } from "./server.js";
 import { getCosts } from "./payments.js";
 
@@ -11,14 +10,13 @@ function validateEnv() {
   const required = ["HEDERA_ACCOUNT_ID", "HEDERA_PRIVATE_KEY", "OPENAI_API_KEY"];
   const missing = required.filter((key) => !process.env[key]);
   if (missing.length > 0) {
-    console.error(`? Missing env vars: ${missing.join(", ")}`);
+    console.error("Missing env vars: " + missing.join(", "));
     process.exit(1);
   }
 }
 
 function startHTTPServer() {
   const port = process.env.PORT || 3000;
-
   const httpServer = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://localhost:${port}`);
 
@@ -44,12 +42,10 @@ function startHTTPServer() {
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
       });
-
       res.on("close", () => {
         transport.close();
         server.close();
       });
-
       await server.connect(transport);
       await transport.handleRequest(req, res);
       return;
@@ -60,29 +56,28 @@ function startHTTPServer() {
   });
 
   httpServer.listen(port, () => {
-    console.error(`?? HTTP server on port ${port}`);
-    console.error(`   Health: http://localhost:${port}/`);
-    console.error(`   MCP:    http://localhost:${port}/mcp`);
+    console.error("HTTP server on port " + port);
+    console.error("Health: http://localhost:" + port + "/");
+    console.error("MCP:    http://localhost:" + port + "/mcp");
   });
 }
 
 async function main() {
   validateEnv();
-
   const isStdio = !process.env.PORT && process.stdin.isTTY === false;
 
   if (isStdio) {
     const server = createServer();
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error("?? Hedera MCP Platform running (stdio)");
-    console.error(`   Network: ${process.env.HEDERA_NETWORK}`);
-    console.error(`   Tools: ${ALL_TOOLS.map(t => t.name).join(", ")}`);
+    console.error("Hedera MCP Platform running (stdio)");
+    console.error("Network: " + process.env.HEDERA_NETWORK);
+    console.error("Tools: " + ALL_TOOLS.map(t => t.name).join(", "));
   } else {
     startHTTPServer();
-    console.error("?? Hedera MCP Platform running (HTTP)");
-    console.error(`   Network: ${process.env.HEDERA_NETWORK}`);
-    console.error(`   Tools: ${ALL_TOOLS.map(t => t.name).join(", ")}`);
+    console.error("Hedera MCP Platform running (HTTP)");
+    console.error("Network: " + process.env.HEDERA_NETWORK);
+    console.error("Tools: " + ALL_TOOLS.map(t => t.name).join(", "));
   }
 }
 
