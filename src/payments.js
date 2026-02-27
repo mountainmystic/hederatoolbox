@@ -2,22 +2,26 @@
 
 const COSTS = {
   // Module 1 - HCS Topic Intelligence
-  hcs_monitor:          { tinybars: 5000000,   hbar: "0.0500" },
-  hcs_query:            { tinybars: 5000000,   hbar: "0.0500" },
-  hcs_understand:       { tinybars: 50000000,  hbar: "0.5000" },
+  hcs_monitor:              { tinybars: 5000000,   hbar: "0.0500" },
+  hcs_query:                { tinybars: 5000000,   hbar: "0.0500" },
+  hcs_understand:           { tinybars: 50000000,  hbar: "0.5000" },
   // Module 2 - Compliance & Audit Trail
-  hcs_write_record:     { tinybars: 200000000, hbar: "2.0000" },
-  hcs_verify_record:    { tinybars: 50000000,  hbar: "0.5000" },
-  hcs_audit_trail:      { tinybars: 100000000, hbar: "1.0000" },
+  hcs_write_record:         { tinybars: 200000000, hbar: "2.0000" },
+  hcs_verify_record:        { tinybars: 50000000,  hbar: "0.5000" },
+  hcs_audit_trail:          { tinybars: 100000000, hbar: "1.0000" },
   // Module 3 - Governance Intelligence
-  governance_monitor:   { tinybars: 10000000,  hbar: "0.1000" },
-  governance_analyze:   { tinybars: 50000000,  hbar: "0.5000" },
-  governance_vote:      { tinybars: 200000000, hbar: "2.0000" },
+  governance_monitor:       { tinybars: 10000000,  hbar: "0.1000" },
+  governance_analyze:       { tinybars: 50000000,  hbar: "0.5000" },
+  governance_vote:          { tinybars: 200000000, hbar: "2.0000" },
   // Module 4 - Token & DeFi Intelligence
-  token_price:          { tinybars: 5000000,   hbar: "0.0500" },
-  token_analyze:        { tinybars: 30000000,  hbar: "0.3000" },
-  defi_yields:          { tinybars: 20000000,  hbar: "0.2000" },
-  token_monitor:        { tinybars: 10000000,  hbar: "0.1000" },
+  token_price:              { tinybars: 5000000,   hbar: "0.0500" },
+  token_analyze:            { tinybars: 30000000,  hbar: "0.3000" },
+  defi_yields:              { tinybars: 20000000,  hbar: "0.2000" },
+  token_monitor:            { tinybars: 10000000,  hbar: "0.1000" },
+  // Module 5 - Verified Identity Resolution
+  identity_resolve:         { tinybars: 10000000,  hbar: "0.1000" },
+  identity_verify_kyc:      { tinybars: 20000000,  hbar: "0.2000" },
+  identity_check_sanctions: { tinybars: 50000000,  hbar: "0.5000" },
 };
 
 const accounts = new Map();
