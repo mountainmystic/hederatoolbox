@@ -6,6 +6,7 @@ import "dotenv/config";
 import { createServer, ALL_TOOLS } from "./server.js";
 import { getCosts } from "./payments.js";
 import { provisionKey, getAllAccounts, getRecentTransactions } from "./db.js";
+import { startWatcher } from "./watcher.js";
 
 function validateEnv() {
   const required = ["HEDERA_ACCOUNT_ID", "HEDERA_PRIVATE_KEY", "OPENAI_API_KEY"];
@@ -146,6 +147,7 @@ async function main() {
     console.error("Tools: " + ALL_TOOLS.map(t => t.name).join(", "));
   } else {
     startHTTPServer();
+    startWatcher();
     console.error("Hedera MCP Platform running (HTTP)");
     console.error("Network: " + process.env.HEDERA_NETWORK);
     console.error("Tools: " + ALL_TOOLS.map(t => t.name).join(", "));
