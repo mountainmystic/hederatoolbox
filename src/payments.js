@@ -22,6 +22,10 @@ const COSTS = {
   identity_resolve:         { tinybars: 10000000,  hbar: "0.1000" },
   identity_verify_kyc:      { tinybars: 20000000,  hbar: "0.2000" },
   identity_check_sanctions: { tinybars: 50000000,  hbar: "0.5000" },
+  // Module 6 - Smart Contract Abstraction
+  contract_read:            { tinybars: 10000000,  hbar: "0.1000" },
+  contract_call:            { tinybars: 50000000,  hbar: "0.5000" },
+  contract_analyze:         { tinybars: 100000000, hbar: "1.0000" },
 };
 
 const accounts = new Map();

@@ -9,6 +9,7 @@ import { COMPLIANCE_TOOL_DEFINITIONS, executeComplianceTool } from "./modules/co
 import { GOVERNANCE_TOOL_DEFINITIONS, executeGovernanceTool } from "./modules/governance/tools.js";
 import { TOKEN_TOOL_DEFINITIONS, executeTokenTool } from "./modules/token/tools.js";
 import { IDENTITY_TOOL_DEFINITIONS, executeIdentityTool } from "./modules/identity/tools.js";
+import { CONTRACT_TOOL_DEFINITIONS, executeContractTool } from "./modules/contract/tools.js";
 
 const ALL_TOOLS = [
   ...HCS_TOOL_DEFINITIONS,
@@ -16,6 +17,7 @@ const ALL_TOOLS = [
   ...GOVERNANCE_TOOL_DEFINITIONS,
   ...TOKEN_TOOL_DEFINITIONS,
   ...IDENTITY_TOOL_DEFINITIONS,
+  ...CONTRACT_TOOL_DEFINITIONS,
 ];
 
 async function routeTool(name, args) {
@@ -34,12 +36,15 @@ async function routeTool(name, args) {
   if (["identity_resolve", "identity_verify_kyc", "identity_check_sanctions"].includes(name)) {
     return executeIdentityTool(name, args);
   }
+  if (["contract_read", "contract_call", "contract_analyze"].includes(name)) {
+    return executeContractTool(name, args);
+  }
   throw new Error(`Unknown tool: ${name}`);
 }
 
 export function createServer() {
   const server = new Server(
-    { name: "hedera-mcp-platform", version: "1.3.0" },
+    { name: "hedera-mcp-platform", version: "1.4.0" },
     { capabilities: { tools: {} } }
   );
 
