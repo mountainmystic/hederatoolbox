@@ -72,7 +72,6 @@ export async function executeBridgeTool(name, args) {
     const payment = chargeForTool("bridge_status", args.api_key);
     const base = getMirrorNodeBase();
 
-    // If specific bridge/token ID provided, fetch its status
     let specificStatus = null;
     if (args.bridge_id) {
       const knownBridge = KNOWN_BRIDGES[args.bridge_id];
@@ -90,7 +89,6 @@ export async function executeBridgeTool(name, args) {
       }
     }
 
-    // Check health of all tracked bridged tokens
     const tokenChecks = await Promise.all(
       Object.entries(BRIDGED_TOKENS).map(async ([id, info]) => {
         try {
@@ -149,13 +147,11 @@ export async function executeBridgeTool(name, args) {
     const base = getMirrorNodeBase();
     const limit = Math.min(args.limit || 50, 100);
 
-    // Fetch token info
     const tokenRes = await axios.get(`${base}/api/v1/tokens/${args.token_id}`);
     const token = tokenRes.data;
     const decimals = parseInt(token.decimals || 0);
     const formatAmount = (raw) => (Math.abs(raw) / Math.pow(10, decimals)).toFixed(decimals);
 
-    // Fetch recent CRYPTOTRANSFER transactions and extract token_transfers for this token
     const txRes = await axios.get(
       `${base}/api/v1/transactions?limit=${limit}&order=desc&transactiontype=CRYPTOTRANSFER`
     ).catch(() => ({ data: { transactions: [] } }));
@@ -172,7 +168,6 @@ export async function executeBridgeTool(name, args) {
         }))
     );
 
-    // Aggregate stats
     const senders = {};
     const receivers = {};
     let totalVolume = 0;
@@ -203,5 +198,169 @@ export async function executeBridgeTool(name, args) {
         volume_formatted: formatAmount(amount) + " " + token.symbol,
       }));
 
-    // Time range
-    const timestamps = transfers.map(t => parseFloat(t.consensus_
+    const tsArr = transfers.map(t => parseFloat(t.consensus_timestamp)).filter(Boolean);
+    const timeRangeHours = tsArr.length > 1
+      ? ((Math.max(...tsArr) - Math.min(...tsArr)) / 3600).toFixed(1)
+      : null;
+
+    const bridgeInfo = BRIDGED_TOKENS[args.token_id] || null;
+
+    return {
+      token_id: args.token_id,
+      name: token.name,
+      symbol: token.symbol,
+      bridge_info: bridgeInfo,
+      total_supply: parseInt(token.total_supply || 0),
+      transfers_found: transfers.length,
+      transactions_scanned: allTxs.length,
+      time_range_hours: timeRangeHours,
+      volume_summary: {
+        total_volume_formatted: formatAmount(totalVolume) + " " + token.symbol,
+        unique_senders: Object.keys(senders).length,
+        unique_receivers: Object.keys(receivers).length,
+      },
+      top_senders: topSenders,
+      top_receivers: topReceivers,
+      recent_transfers: transfers.slice(0, 10).map(t => ({
+        consensus_timestamp: t.consensus_timestamp,
+        account: t.account,
+        amount_formatted: formatAmount(t.amount) + " " + token.symbol,
+        direction: t.amount > 0 ? "IN" : "OUT",
+      })),
+      payment,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // --- bridge_analyze ---
+  if (name === "bridge_analyze") {
+    const payment = chargeForTool("bridge_analyze", args.api_key);
+    const base = getMirrorNodeBase();
+
+    const tokenRes = await axios.get(`${base}/api/v1/tokens/${args.token_id}`);
+    const token = tokenRes.data;
+    const decimals = parseInt(token.decimals || 0);
+    const totalSupply = parseInt(token.total_supply || 0);
+    const formatAmount = (raw) => (Math.abs(raw) / Math.pow(10, decimals)).toLocaleString(undefined, { maximumFractionDigits: decimals });
+
+    const holdersRes = await axios.get(
+      `${base}/api/v1/tokens/${args.token_id}/balances?limit=50&order=desc&account.balance.gt=0`
+    ).catch(() => ({ data: { balances: [] } }));
+    const holders = (holdersRes.data.balances || []).filter(h => h.balance > 0);
+
+    const txRes = await axios.get(
+      `${base}/api/v1/transactions?limit=100&order=desc&transactiontype=CRYPTOTRANSFER`
+    ).catch(() => ({ data: { transactions: [] } }));
+    const allTxs = txRes.data.transactions || [];
+
+    const transfers = allTxs.flatMap(tx =>
+      (tx.token_transfers || [])
+        .filter(tt => tt.token_id === args.token_id)
+        .map(tt => ({
+          consensus_timestamp: tx.consensus_timestamp,
+          account: tt.account,
+          amount: tt.amount,
+        }))
+    );
+
+    const bridgeInfo = BRIDGED_TOKENS[args.token_id] || null;
+
+    const treasury = token.treasury_account_id;
+    const treasuryBalance = holders.find(h => h.account === treasury)?.balance || 0;
+    const treasuryPct = totalSupply > 0 ? ((treasuryBalance / totalSupply) * 100).toFixed(2) : "0";
+    const top3Balance = holders.slice(0, 3).reduce((sum, h) => sum + (h.balance || 0), 0);
+    const top3Pct = totalSupply > 0 ? ((top3Balance / totalSupply) * 100).toFixed(2) : "0";
+
+    const tsArr = transfers.map(t => parseFloat(t.consensus_timestamp)).filter(Boolean);
+    const timeRangeHours = tsArr.length > 1
+      ? Math.max(1, (Math.max(...tsArr) - Math.min(...tsArr)) / 3600)
+      : 1;
+    const transfersPerHour = (transfers.length / timeRangeHours).toFixed(2);
+
+    let totalInflow = 0;
+    let totalOutflow = 0;
+    for (const t of transfers) {
+      if (t.amount > 0) totalInflow += t.amount;
+      else totalOutflow += Math.abs(t.amount);
+    }
+    const netFlow = totalInflow - totalOutflow;
+    const flowRatio = totalOutflow > 0 ? (totalInflow / totalOutflow).toFixed(3) : "inf";
+
+    const createdAt = token.created_timestamp
+      ? new Date(parseFloat(token.created_timestamp) * 1000)
+      : null;
+    const ageDays = createdAt
+      ? Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
+      : null;
+
+    const riskSignals = [];
+    let riskScore = 0;
+
+    if (parseFloat(top3Pct) > 70) { riskScore += 25; riskSignals.push("Top 3 holders control over 70% of supply - high custodian concentration"); }
+    if (parseFloat(treasuryPct) > 50) { riskScore += 20; riskSignals.push("Treasury holds over 50% of total supply - centralised custody risk"); }
+    if (!token.admin_key && bridgeInfo?.type === "bridged") { riskScore += 10; riskSignals.push("No admin key - bridged token is immutable (cannot be paused in emergency)"); }
+    if (token.pause_status === "PAUSED") { riskScore += 40; riskSignals.push("Token is currently PAUSED - bridge may be halted"); }
+    if (token.freeze_key) { riskSignals.push("Freeze key exists - bridge operator can freeze individual accounts"); }
+    if (token.wipe_key) { riskScore += 15; riskSignals.push("Wipe key exists - bridge operator can wipe balances"); }
+    if (ageDays !== null && ageDays < 30) { riskScore += 15; riskSignals.push("Token is less than 30 days old - new bridge deployment"); }
+    if (riskSignals.length === 0) riskSignals.push("No significant bridge risk signals detected");
+
+    const riskLevel = riskScore >= 50 ? "HIGH" : riskScore >= 20 ? "MEDIUM" : "LOW";
+
+    let pegType = "unclassified";
+    if (bridgeInfo?.type === "wrapped-native") pegType = "wrapped-native";
+    else if (bridgeInfo?.type === "bridged") pegType = "cross-chain-peg";
+    else if (bridgeInfo?.type === "liquid-staking") pegType = "liquid-staking-derivative";
+    else if (bridgeInfo?.type === "native") pegType = "native-token";
+
+    return {
+      token_id: args.token_id,
+      name: token.name,
+      symbol: token.symbol,
+      bridge_info: bridgeInfo,
+      peg_type: pegType,
+      age_days: ageDays,
+      total_supply_formatted: formatAmount(totalSupply) + " " + token.symbol,
+      treasury_account: treasury,
+      custodian_analysis: {
+        treasury_balance_pct: treasuryPct + "%",
+        top_3_holders_pct: top3Pct + "%",
+        total_holders_sampled: holders.length,
+        top_holders: holders.slice(0, 5).map(h => ({
+          account: h.account,
+          balance_formatted: formatAmount(h.balance) + " " + token.symbol,
+          pct_of_supply: totalSupply > 0 ? ((h.balance / totalSupply) * 100).toFixed(2) + "%" : "unknown",
+        })),
+      },
+      transfer_velocity: {
+        transfers_per_hour: transfersPerHour,
+        transfers_found: transfers.length,
+        transactions_scanned: allTxs.length,
+        time_range_hours: timeRangeHours.toFixed(1),
+      },
+      flow_analysis: {
+        total_inflow_formatted: formatAmount(totalInflow) + " " + token.symbol,
+        total_outflow_formatted: formatAmount(totalOutflow) + " " + token.symbol,
+        net_flow_formatted: formatAmount(Math.abs(netFlow)) + " " + token.symbol + (netFlow >= 0 ? " net inflow" : " net outflow"),
+        inflow_outflow_ratio: flowRatio,
+      },
+      token_controls: {
+        admin_key: !!token.admin_key,
+        freeze_key: !!token.freeze_key,
+        wipe_key: !!token.wipe_key,
+        pause_key: !!token.pause_key,
+        kyc_key: !!token.kyc_key,
+        pause_status: token.pause_status || "NOT_APPLICABLE",
+      },
+      risk_assessment: {
+        score: riskScore,
+        level: riskLevel,
+        signals: riskSignals,
+      },
+      payment,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  throw new Error(`Unknown bridge tool: ${name}`);
+}
