@@ -25,10 +25,10 @@ function startHTTPServer() {
       res.end(JSON.stringify({
         status: "ok",
         service: "Hedera MCP Platform",
-        version: "1.5.0",
+        version: "1.6.0",
         network: process.env.HEDERA_NETWORK,
         account: process.env.HEDERA_ACCOUNT_ID,
-        modules: ["hcs", "compliance", "governance", "token", "identity", "contract", "nft"],
+        modules: ["hcs", "compliance", "governance", "token", "identity", "contract", "nft", "bridge"],
         tools: ALL_TOOLS.map((t) => t.name),
         costs: getCosts(),
         mcp_endpoint: "/mcp",

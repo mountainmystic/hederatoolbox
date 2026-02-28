@@ -31,6 +31,10 @@ const COSTS = {
   nft_token_metadata:       { tinybars: 10000000,  hbar: "0.1000" },
   nft_collection_analyze:   { tinybars: 30000000,  hbar: "0.3000" },
   token_holders:            { tinybars: 20000000,  hbar: "0.2000" },
+  // Module 8 - Cross-Network Bridge Intelligence
+  bridge_status:            { tinybars: 10000000,  hbar: "0.1000" },
+  bridge_transfers:         { tinybars: 20000000,  hbar: "0.2000" },
+  bridge_analyze:           { tinybars: 50000000,  hbar: "0.5000" },
 };
 
 const accounts = new Map();

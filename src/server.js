@@ -11,6 +11,7 @@ import { TOKEN_TOOL_DEFINITIONS, executeTokenTool } from "./modules/token/tools.
 import { IDENTITY_TOOL_DEFINITIONS, executeIdentityTool } from "./modules/identity/tools.js";
 import { CONTRACT_TOOL_DEFINITIONS, executeContractTool } from "./modules/contract/tools.js";
 import { NFT_TOOL_DEFINITIONS, executeNFTTool } from "./modules/nft/tools.js";
+import { BRIDGE_TOOL_DEFINITIONS, executeBridgeTool } from "./modules/bridge/tools.js";
 
 const ALL_TOOLS = [
   ...HCS_TOOL_DEFINITIONS,
@@ -20,6 +21,7 @@ const ALL_TOOLS = [
   ...IDENTITY_TOOL_DEFINITIONS,
   ...CONTRACT_TOOL_DEFINITIONS,
   ...NFT_TOOL_DEFINITIONS,
+  ...BRIDGE_TOOL_DEFINITIONS,
 ];
 
 async function routeTool(name, args) {
@@ -44,12 +46,15 @@ async function routeTool(name, args) {
   if (["nft_collection_info", "nft_token_metadata", "nft_collection_analyze", "token_holders"].includes(name)) {
     return executeNFTTool(name, args);
   }
+  if (["bridge_status", "bridge_transfers", "bridge_analyze"].includes(name)) {
+    return executeBridgeTool(name, args);
+  }
   throw new Error(`Unknown tool: ${name}`);
 }
 
 export function createServer() {
   const server = new Server(
-    { name: "hedera-mcp-platform", version: "1.5.0" },
+    { name: "hedera-mcp-platform", version: "1.6.0" },
     { capabilities: { tools: {} } }
   );
 

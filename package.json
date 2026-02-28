@@ -1,6 +1,6 @@
 {
   "name": "hedera-mcp-platform",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "mcpName": "io.github.mountainmystic/hedera-mcp-platform",
   "description": "Complete Hedera ecosystem intelligence platform for AI agents. 8 MCP servers, 24 tools. Pay per call in HBAR.",
   "main": "src/index.js",
