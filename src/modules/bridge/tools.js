@@ -21,8 +21,9 @@ const BRIDGED_TOKENS = {
   "0.0.731861":  { name: "SAUCE", source: "SaucerSwap", type: "native" },
   "0.0.1456986": { name: "WHBAR", source: "SaucerSwap", type: "wrapped-native" },
   "0.0.541564":  { name: "WETH[hts]", source: "HashPort", type: "bridged", origin_network: "Ethereum" },
-  "0.0.1055483": { name: "USDC[hts]", source: "HashPort", type: "bridged", origin_network: "Ethereum" },
-  "0.0.1117481": { name: "WBTC[hts]", source: "HashPort", type: "bridged", origin_network: "Ethereum" },
+  "0.0.1055483": { name: "WBTC[hts]", source: "HashPort", type: "bridged", origin_network: "Ethereum" },
+  "0.0.1055498": { name: "AAVE[hts]", source: "HashPort", type: "bridged", origin_network: "Ethereum" },
+  "0.0.540318":  { name: "WMATIC[hts]", source: "HashPort", type: "bridged", origin_network: "Polygon" },
 };
 
 export const BRIDGE_TOOL_DEFINITIONS = [
