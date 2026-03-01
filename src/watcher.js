@@ -9,7 +9,7 @@ import { creditAccount, depositAlreadyProcessed, recordDeposit } from "./db.js";
 
 const PLATFORM_ACCOUNT = process.env.HEDERA_ACCOUNT_ID;   // e.g. 0.0.10298356
 const NETWORK          = process.env.HEDERA_NETWORK || "mainnet";
-const POLL_INTERVAL_MS = 30_000; // 30 seconds
+const POLL_INTERVAL_MS = 10_000; // 10 seconds
 
 const MIRROR_BASE = NETWORK === "mainnet"
   ? "https://mainnet-public.mirrornode.hedera.com"

@@ -66,12 +66,26 @@ COMPLETED THIS SESSION — Phase 1: SQLite Persistence
 - Added agentlens.db to .gitignore
 - Added better-sqlite3 to package.json dependencies
 
-NEXT SESSION — Phase 2: Hedera Deposit Watcher
+COMPLETED — Phase 2: Hedera Deposit Watcher
   - src/watcher.js polls mirror node every 30s for incoming HBAR to platform wallet
   - Auto-creates account keyed to sender's Hedera account ID
   - Calls creditAccount() from db.js
   - Tracks last-seen transaction to avoid double-crediting
   - Started from index.js alongside HTTP server
+  - LIVE TESTED: sent 3 HBAR from 0.0.7925398, detected within 30s, credited automatically
+
+COMPLETED — Phase 3: account_info Tool
+  - src/modules/account/tools.js — free tool, no api_key required
+  - Returns platform wallet address, step-by-step funding instructions, full pricing table
+  - Returns balance if api_key provided
+  - First in tool list so agents discover it immediately
+  - Bumped version to 1.7.0
+
+NEXT: Phase 4 — x402 REST layer (per-call payments, no account needed)
+  - Install @x402/express
+  - /api/* REST endpoints alongside /mcp
+  - Blocky402 facilitator for Hedera HBAR payments
+  - Per-call settlement, no API key required
 ================================================================================
 SESSION: 2026-02-28 — README & Documentation
 ================================================================================
