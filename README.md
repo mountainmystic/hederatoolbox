@@ -1,8 +1,8 @@
 # Hedera MCP Platform
 
-> **26 tools. 8 modules. One unified MCP server for Hedera blockchain intelligence.**
+> **27 tools. 9 modules. One unified MCP server for Hedera blockchain intelligence.**
 
-A production-ready [Model Context Protocol](https://modelcontextprotocol.io) server that gives AI agents deep, structured access to the Hedera ecosystem — HCS topics, compliance trails, governance, tokens, DeFi, identity, smart contracts, NFTs, and cross-chain bridges. Metered by HBAR micropayments per tool call.
+A production-ready [Model Context Protocol](https://modelcontextprotocol.io) server that gives AI agents deep, structured access to the Hedera ecosystem — HCS topics, compliance trails, governance, tokens, DeFi, identity, smart contracts, NFTs, and cross-chain bridges. Pay per call in HBAR. No registration required.
 
 [![npm version](https://img.shields.io/npm/v/hedera-mcp-platform)](https://www.npmjs.com/package/hedera-mcp-platform)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-listed-blue)](https://registry.modelcontextprotocol.io)
@@ -16,7 +16,22 @@ A production-ready [Model Context Protocol](https://modelcontextprotocol.io) ser
 https://hedera-mcp-platform-production.up.railway.app/mcp
 ```
 
-Connect any MCP-compatible AI agent (Claude, GPT, etc.) directly — no infrastructure needed.
+Connect any MCP-compatible AI agent directly — no infrastructure needed.
+
+---
+
+## How Payments Work
+
+This platform uses **agent-native HBAR payments**. There is no registration form, no email, no OAuth flow. An AI agent can onboard itself autonomously in under 30 seconds:
+
+1. Call `account_info` (free) — get the platform wallet address and full pricing table
+2. Send any amount of HBAR to the platform wallet from your Hedera account
+3. Your Hedera account ID becomes your API key automatically within 10 seconds
+4. Pass your Hedera account ID as the `api_key` parameter in any tool call
+
+Your balance is persistent — unused credit carries over indefinitely. Call `account_info` with your account ID at any time to check your remaining balance.
+
+**Platform wallet:** `0.0.10298356` (mainnet)
 
 ---
 
@@ -24,7 +39,7 @@ Connect any MCP-compatible AI agent (Claude, GPT, etc.) directly — no infrastr
 
 ### Use the hosted endpoint (recommended)
 
-Add this to your MCP client config:
+Add to your MCP client config:
 
 ```json
 {
@@ -36,20 +51,19 @@ Add this to your MCP client config:
 }
 ```
 
+Then in your agent, call `account_info` first — it will tell you everything you need to know to fund your account and start making calls.
+
 ### Run locally
 
 ```bash
-npm install -g hedera-mcp-platform
-
-# or clone and run
 git clone https://github.com/mountainmystic/hedera-mcp-platform.git
 cd hedera-mcp-platform
 npm install
-cp .env.example .env   # fill in your keys
+cp .env.example .env   # fill in your Hedera credentials
 npm start
 ```
 
-**Requirements:** Node.js ≥ 20
+**Requirements:** Node.js ≥ 22.5.0
 
 ---
 
@@ -57,17 +71,28 @@ npm start
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `HEDERA_ACCOUNT_ID` | Your Hedera account (e.g. `0.0.123456`) | Yes |
+| `HEDERA_ACCOUNT_ID` | Your Hedera operator account (e.g. `0.0.123456`) | Yes |
 | `HEDERA_PRIVATE_KEY` | ECDSA private key for signing transactions | Yes |
 | `HEDERA_NETWORK` | `mainnet` or `testnet` | Yes |
 | `OPENAI_API_KEY` | GPT-4o Mini for AI-powered analysis tools | Yes |
+| `ADMIN_SECRET` | Secret header for admin provisioning endpoints | Yes |
 | `PORT` | HTTP server port (default: `3000`) | No |
 
 ---
 
 ## Modules & Tools
 
-All tools require an `api_key` parameter. Each call is metered and deducted from your AgentLens balance in HBAR.
+All tools except `account_info` require an `api_key` parameter (your Hedera account ID). Each call is metered and deducted from your balance.
+
+---
+
+### Module 0 — Account & Onboarding
+
+| Tool | Description | Cost |
+|------|-------------|------|
+| `account_info` | Platform wallet address, full pricing table, and your current balance | **Free** |
+
+This is the agent onboarding entrypoint. Call it first. It tells an agent exactly how to fund an account and what everything costs.
 
 ---
 
@@ -191,13 +216,13 @@ Monitor and analyze bridged assets flowing between Hedera and other chains via H
 
 | Tier | Tools | Cost |
 |------|-------|------|
-| Micro | `hcs_monitor`, `hcs_query`, `token_price`, `nft_collection_info`, `nft_token_metadata`, `identity_resolve`, `contract_read`, `governance_monitor`, `token_monitor`, `bridge_status` | 0.05–0.10 HBAR |
-| Standard | `identity_verify_kyc`, `defi_yields`, `bridge_transfers`, `token_holders`, `token_analyze`, `nft_collection_analyze` | 0.20–0.30 HBAR |
-| Analysis | `hcs_understand`, `hcs_verify_record`, `identity_check_sanctions`, `governance_analyze`, `contract_call`, `bridge_analyze` | 0.50 HBAR |
-| Deep | `contract_analyze`, `hcs_audit_trail` | 1.00 HBAR |
-| Write | `hcs_write_record`, `governance_vote` | 2.00 HBAR |
-
-New accounts receive **10 HBAR** of starting credit.
+| **Free** | `account_info` | 0 HBAR |
+| **Micro** | `hcs_monitor`, `hcs_query`, `token_price` | 0.05 HBAR |
+| **Low** | `governance_monitor`, `token_monitor`, `identity_resolve`, `contract_read`, `nft_collection_info`, `nft_token_metadata`, `bridge_status` | 0.10 HBAR |
+| **Standard** | `identity_verify_kyc`, `defi_yields`, `bridge_transfers`, `token_holders`, `token_analyze`, `nft_collection_analyze` | 0.20–0.30 HBAR |
+| **Analysis** | `hcs_understand`, `hcs_verify_record`, `identity_check_sanctions`, `governance_analyze`, `contract_call`, `bridge_analyze` | 0.50 HBAR |
+| **Deep** | `contract_analyze`, `hcs_audit_trail` | 1.00 HBAR |
+| **Write** | `hcs_write_record`, `governance_vote` | 2.00 HBAR |
 
 ---
 
@@ -208,8 +233,11 @@ hedera-mcp-platform/
 ├── src/
 │   ├── index.js          # Entry point — stdio + Streamable HTTP transports
 │   ├── server.js         # MCP server, tool registry, request routing
-│   ├── payments.js       # HBAR micropayment ledger
+│   ├── payments.js       # HBAR charge logic, tool cost table
+│   ├── db.js             # SQLite persistence — accounts, balances, transactions
+│   ├── watcher.js        # Hedera deposit watcher — polls mirror node every 10s
 │   └── modules/
+│       ├── account/      # Account info & agent onboarding (free)
 │       ├── hcs/          # HCS Topic Intelligence
 │       ├── compliance/   # Compliance & Audit Trail
 │       ├── governance/   # Governance Intelligence
@@ -223,6 +251,8 @@ hedera-mcp-platform/
 The server supports two MCP transports:
 - **Streamable HTTP** (`/mcp`) — for remote AI agents and Claude.ai integrations
 - **stdio** — for local MCP client configurations (Claude Desktop, etc.)
+
+The deposit watcher polls the Hedera mirror node every 10 seconds. When it detects a new HBAR transfer to the platform wallet, it automatically creates or credits the sender's account. The sender's Hedera account ID becomes their API key — no human involvement required.
 
 ---
 
@@ -259,35 +289,33 @@ Add to `claude_desktop_config.json`:
 curl https://hedera-mcp-platform-production.up.railway.app/
 ```
 
-Returns current status, network, all 26 tool names, and per-tool pricing.
+Returns current status, network, all tool names, and per-tool pricing.
 
 ---
 
 ## Known Limitations
 
-- **`token_price`** — Price data pending SaucerSwap API key. Market cap and volume available; spot price returns `null` until resolved.
-- **`token_holders`** — Sorted by account ID (mirror node limitation). Balances are accurate; ranking by balance requires client-side sorting after fetching.
-- **`bridge_analyze`** — Custodian flow may show zeros for very low-activity bridged tokens (e.g. WETH with <100 recent transfers). The tool correctly reports what it finds within the most recent 100 transactions.
-- **Payment system** — Currently an in-memory ledger (resets on restart). Production API key provisioning with persistent balances is on the roadmap.
+- **`token_price`** — Spot price returns `null` pending SaucerSwap API key. Market cap and volume are available.
+- **`token_holders`** — Sorted by account ID rather than balance (mirror node limitation). Balances are accurate; sort client-side if ranking is needed.
+- **`bridge_analyze`** — Custodian flow may show zeros for very low-activity bridged tokens with fewer than 100 recent transfers.
 
 ---
 
 ## Roadmap
 
-- [ ] Persistent API key provisioning with real HBAR payments
-- [ ] SaucerSwap API integration for live token prices  
+- [ ] SaucerSwap API integration for live token prices *(in progress)*
+- [ ] x402 per-call REST layer — pay per request with no account needed, once Hedera mainnet support matures
 - [ ] AgentLens developer portal and dashboard
 - [ ] Webhook/subscription support for real-time topic monitoring
-- [ ] USDT[hts] bridge support once token ID confirmed
 
 ---
 
 ## Links
 
-- **npm:** https://www.npmjs.com/package/hedera-mcp-platform  
-- **MCP Registry:** https://registry.modelcontextprotocol.io (search: `hedera-mcp-platform`)  
-- **GitHub:** https://github.com/mountainmystic/hedera-mcp-platform  
-- **Live endpoint:** https://hedera-mcp-platform-production.up.railway.app/mcp  
+- **npm:** https://www.npmjs.com/package/hedera-mcp-platform
+- **MCP Registry:** https://registry.modelcontextprotocol.io (search: `hedera-mcp-platform`)
+- **GitHub:** https://github.com/mountainmystic/hedera-mcp-platform
+- **Live endpoint:** https://hedera-mcp-platform-production.up.railway.app/mcp
 
 ---
 
