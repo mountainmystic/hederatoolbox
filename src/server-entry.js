@@ -4,7 +4,12 @@
 import "dotenv/config";
 import { createServer, ALL_TOOLS } from "./server.js";
 import { getCosts } from "./payments.js";
-import { provisionKey, getAllAccounts, getRecentTransactions } from "./db.js";
+import { provisionKey, getAllAccounts, getRecentTransactions, getHITLEvent, approveHITLEvent } from "./db.js";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import path from "path";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const TERMS = JSON.parse(readFileSync(path.join(__dirname, "../legal/terms.json"), "utf-8"));
 import { startWatcher } from "./watcher.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import http from "http";
@@ -52,7 +57,30 @@ const httpServer = http.createServer(async (req, res) => {
       tools: ALL_TOOLS.map((t) => t.name),
       costs: getCosts(),
       mcp_endpoint: "/mcp",
+      terms_endpoint: "/terms",
       timestamp: new Date().toISOString(),
+    });
+  }
+
+  // Public terms endpoint — agents and browsers can fetch this directly
+  if (req.method === "GET" && url.pathname === "/terms") {
+    return json(res, 200, TERMS);
+  }
+
+  // HITL approval endpoint — human clicks this URL to unblock a hard-stop
+  if (req.method === "GET" && url.pathname.startsWith("/hitl/approve/")) {
+    const token = url.pathname.split("/").pop();
+    const event = getHITLEvent(token);
+    if (!event) return json(res, 404, { error: "Approval token not found" });
+    if (event.status === "approved") return json(res, 200, { message: "Already approved", event });
+    approveHITLEvent(token);
+    return json(res, 200, {
+      message: "Approved. The pending tool call may now be retried by the agent.",
+      approval_token: token,
+      tool: event.tool_name,
+      api_key: event.api_key,
+      amount_hbar: event.amount_hbar,
+      approved_at: new Date().toISOString(),
     });
   }
 

@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0",
+  "service": "HederaIntel MCP Platform",
+  "provider": {
+    "name": "Duncan Maguire / HederaIntel",
+    "contact": "legal@hederaintel.io",
+    "jurisdiction": "International"
+  },
+  "terms_version": "2026-03-01",
+  "effective_date": "2026-03-01",
+  "acceptance_method": "Calling confirm_terms with your Hedera account ID constitutes acceptance. Your account ID is your digital signature.",
+  "acceptance_logged": "on-chain via HCS topic 0.0.10305125",
+
+  "permitted_use": [
+    "Querying Hedera blockchain data for informational purposes",
+    "Writing compliance records to HCS topics you control",
+    "Casting governance votes on behalf of an account you own",
+    "Integrating returned data into your own applications"
+  ],
+
+  "prohibited_use": [
+    "Reverse-engineering or replicating the remote server architecture",
+    "Reselling API access without a written reseller agreement",
+    "Using the service for market manipulation or wash trading",
+    "Automated trading without human oversight for transactions over 500 HBAR",
+    "Using sanctions screening results as sole AML/KYC compliance"
+  ],
+
+  "pricing": {
+    "currency": "HBAR",
+    "hbar_price_reference_usd": 0.10,
+    "tiers": {
+      "free": {
+        "tools": ["account_info", "get_terms"],
+        "cost_hbar": 0
+      },
+      "micro": {
+        "tools": ["hcs_monitor", "hcs_query", "token_price"],
+        "cost_hbar": 0.05
+      },
+      "low": {
+        "tools": ["governance_monitor", "token_monitor", "identity_resolve", "contract_read", "nft_collection_info", "nft_token_metadata", "bridge_status"],
+        "cost_hbar": 0.10
+      },
+      "standard": {
+        "tools": ["identity_verify_kyc", "defi_yields", "bridge_transfers", "token_holders", "token_analyze", "nft_collection_analyze"],
+        "cost_hbar": "0.20-0.30"
+      },
+      "analysis": {
+        "tools": ["hcs_understand", "hcs_verify_record", "identity_check_sanctions", "governance_analyze", "contract_call", "bridge_analyze"],
+        "cost_hbar": 0.50
+      },
+      "deep": {
+        "tools": ["contract_analyze", "hcs_audit_trail"],
+        "cost_hbar": 1.00
+      },
+      "write": {
+        "tools": ["hcs_write_record", "governance_vote"],
+        "cost_hbar": 2.00
+      }
+    }
+  },
+
+  "human_in_the_loop": {
+    "description": "HITL controls apply to Hedera transactions initiated through this platform.",
+    "auto_approve_threshold_hbar": 500,
+    "notify_only_range_hbar": { "min": 500, "max": 5000 },
+    "hard_stop_threshold_hbar": 10000,
+    "hard_stop_operations": [
+      "updateAdminKey",
+      "updateAccount",
+      "deleteAccount",
+      "freezeAccount",
+      "contractUpdate"
+    ],
+    "hard_stop_response": "403 Human Approval Required — a signing URL will be returned"
+  },
+
+  "liability": {
+    "warranty": "NONE — service provided as-is",
+    "financial_losses": "Provider is not liable for losses from agent decisions based on API data",
+    "data_accuracy": "Data sourced from Hedera mirror node; accuracy not guaranteed",
+    "max_liability_usd": 100
+  },
+
+  "data_retention": {
+    "consent_events": "Permanent (on-chain HCS)",
+    "transaction_logs": "90 days (SQLite)",
+    "account_balances": "Indefinite until account closed"
+  },
+
+  "governing_law": "Laws of the provider jurisdiction",
+  "dispute_resolution": "Direct negotiation, then binding arbitration",
+
+  "agent_acknowledgements": [
+    "I understand this API returns data only and does not constitute financial advice",
+    "I accept responsibility for all actions my agent takes based on this data",
+    "I understand the HITL thresholds and will not attempt to circumvent them",
+    "I confirm I am authorised to bind the entity whose Hedera account I am using",
+    "I have read and agree to the full terms at: https://hedera-mcp-platform-production.up.railway.app/terms"
+  ]
+}

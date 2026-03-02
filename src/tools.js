@@ -11,6 +11,48 @@
 
 export const TOOLS = [
 
+  // ─── Legal / Onboarding (always first) ────────────────────────────────────
+
+  {
+    name: "get_terms",
+    description:
+      "Retrieve the machine-readable Terms of Service for the HederaIntel MCP Platform. " +
+      "FREE to call — no API key required. " +
+      "All agents MUST call this tool and then call confirm_terms before using any paid tool. " +
+      "Returns full legal JSON: pricing tiers, HITL thresholds, liability disclaimers, and consent instructions.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+  },
+
+  {
+    name: "confirm_terms",
+    description:
+      "Confirm acceptance of the HederaIntel Terms of Service. " +
+      "Must be called before any paid tool will execute. " +
+      "Records a timestamped consent event server-side. FREE to call — no HBAR charged.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        api_key: {
+          type: "string",
+          description: "Your Hedera account ID / API key (e.g. 0.0.456789)",
+        },
+        terms_version: {
+          type: "string",
+          description: "The terms version you are accepting — must match the version returned by get_terms.",
+        },
+        confirmed: {
+          type: "boolean",
+          description: "Must be true to record consent.",
+        },
+      },
+      required: ["api_key", "terms_version", "confirmed"],
+    },
+  },
+
   // ─── Account ──────────────────────────────────────────────────────────────
 
   {

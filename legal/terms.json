@@ -1,0 +1,130 @@
+{
+  "_schema": "mrTOS-1.0",
+  "_description": "Machine-Readable Terms of Service for HederaIntel MCP Platform. Parse and present to end-users before confirming consent.",
+  "service": {
+    "name": "HederaIntel MCP Platform",
+    "provider": "mountainmystic",
+    "version": "2.1.0",
+    "terms_version": "1.0.0",
+    "effective_date": "2026-03-01",
+    "jurisdiction": "British Columbia, Canada",
+    "contact": "https://github.com/mountainmystic/hedera-mcp-platform/issues"
+  },
+  "license": {
+    "type": "Proprietary",
+    "summary": "All source code, business logic, and IP in the remote server is proprietary and confidential. The thin-client npm package is provided for integration purposes only. Reverse engineering, decompilation, or redistribution of server-side logic is strictly prohibited.",
+    "permitted": [
+      "Call the API via the published npm package or direct HTTP endpoint",
+      "Build applications that integrate with this MCP server",
+      "Use query results in your own products and services"
+    ],
+    "prohibited": [
+      "Reverse engineer or decompile the remote server logic",
+      "Redistribute or resell API access to third parties without written agreement",
+      "Use the service to facilitate illegal transactions or sanctions evasion",
+      "Automate transactions exceeding HITL thresholds without human approval",
+      "Attempt to bypass consent or credit check mechanisms"
+    ]
+  },
+  "pricing": {
+    "currency": "HBAR",
+    "hbar_usd_reference": "~$0.10 USD per HBAR (subject to market rates)",
+    "tiers": {
+      "read": {
+        "usd_equivalent": "~$0.005–$0.01",
+        "hbar_cost": "0.05 – 0.10",
+        "tools": [
+          { "name": "account_info",       "hbar": "0.0000", "note": "free" },
+          { "name": "get_terms",          "hbar": "0.0000", "note": "free" },
+          { "name": "confirm_terms",      "hbar": "0.0000", "note": "free" },
+          { "name": "hcs_monitor",        "hbar": "0.0500" },
+          { "name": "hcs_query",          "hbar": "0.0500" },
+          { "name": "token_price",        "hbar": "0.0500" },
+          { "name": "governance_monitor", "hbar": "0.1000" },
+          { "name": "token_monitor",      "hbar": "0.1000" },
+          { "name": "identity_resolve",   "hbar": "0.1000" },
+          { "name": "contract_read",      "hbar": "0.1000" },
+          { "name": "nft_collection_info","hbar": "0.1000" },
+          { "name": "nft_token_metadata", "hbar": "0.1000" },
+          { "name": "bridge_status",      "hbar": "0.1000" }
+        ]
+      },
+      "standard": {
+        "usd_equivalent": "~$0.02–$0.05",
+        "hbar_cost": "0.20 – 0.50",
+        "tools": [
+          { "name": "defi_yields",              "hbar": "0.2000" },
+          { "name": "token_holders",            "hbar": "0.2000" },
+          { "name": "identity_verify_kyc",      "hbar": "0.2000" },
+          { "name": "bridge_transfers",         "hbar": "0.2000" },
+          { "name": "token_analyze",            "hbar": "0.3000" },
+          { "name": "nft_collection_analyze",   "hbar": "0.3000" },
+          { "name": "hcs_understand",           "hbar": "0.5000" },
+          { "name": "hcs_verify_record",        "hbar": "0.5000" },
+          { "name": "identity_check_sanctions", "hbar": "0.5000" },
+          { "name": "governance_analyze",       "hbar": "0.5000" },
+          { "name": "contract_call",            "hbar": "0.5000" },
+          { "name": "bridge_analyze",           "hbar": "0.5000" }
+        ]
+      },
+      "council": {
+        "usd_equivalent": "~$0.10–$0.20",
+        "hbar_cost": "1.00 – 2.00",
+        "description": "Enterprise / Council Member grade. Includes write operations and deep analysis.",
+        "tools": [
+          { "name": "contract_analyze",  "hbar": "1.0000" },
+          { "name": "hcs_audit_trail",   "hbar": "1.0000" },
+          { "name": "hcs_write_record",  "hbar": "2.0000" },
+          { "name": "governance_vote",   "hbar": "2.0000" }
+        ]
+      }
+    },
+    "billing_notes": [
+      "Credits are purchased by sending HBAR to the platform wallet.",
+      "Your Hedera account ID is your API key. No registration required.",
+      "Unused credits carry over indefinitely.",
+      "No refunds for consumed credits."
+    ]
+  },
+  "human_in_the_loop": {
+    "description": "HITL thresholds are enforced server-side to protect users from large unintended transactions.",
+    "tiers": {
+      "auto_approve": {
+        "threshold_hbar": "< 500",
+        "action": "Execute immediately, no human approval required."
+      },
+      "notify_only": {
+        "threshold_hbar": "500 – 5000",
+        "action": "Execute immediately, then send a webhook notification to the registered endpoint."
+      },
+      "hard_stop": {
+        "threshold_hbar": "> 10000",
+        "action": "Blocked. Returns HTTP 403 with a unique human-approval URL. No execution until approved.",
+        "also_applies_to": "Administrative smart contract calls (e.g. updateAdminKey, deleteAccount)"
+      }
+    }
+  },
+  "liability": {
+    "disclaimer": "THIS SERVICE IS PROVIDED 'AS IS' WITHOUT WARRANTY OF ANY KIND. THE PROVIDER IS NOT RESPONSIBLE FOR: (a) Financial losses resulting from AI agent decisions; (b) Incorrect or outdated blockchain data; (c) Smart contract execution failures; (d) Network outages or mirror node unavailability; (e) Any consequential, incidental, or punitive damages.",
+    "user_responsibilities": [
+      "You are solely responsible for validating all data before acting on it.",
+      "You are responsible for configuring HITL thresholds appropriate to your risk tolerance.",
+      "You must ensure your AI agents do not execute transactions prohibited by applicable law.",
+      "You must comply with all applicable AML, KYC, and sanctions regulations in your jurisdiction."
+    ],
+    "max_liability": "Maximum liability is limited to the HBAR credits consumed in the 30 days preceding the claim."
+  },
+  "data": {
+    "stored": ["Hedera account ID (API key)", "HBAR balance", "Tool call history", "Consent timestamp and terms version"],
+    "not_stored": ["Private keys", "Personal identity information", "IP addresses (beyond ephemeral rate limiting)"],
+    "retention": "Account data retained until account balance reaches zero and 90 days have elapsed with no activity.",
+    "gdpr_note": "For data deletion requests, contact the provider via GitHub issues."
+  },
+  "consent": {
+    "mechanism": "Call the confirm_terms tool with your api_key and this terms_version to record consent.",
+    "terms_version": "1.0.0",
+    "required_before": "Any paid tool call",
+    "immutable": true,
+    "note": "Consent is recorded on the server with a timestamp and cannot be retracted for past transactions."
+  }
+}

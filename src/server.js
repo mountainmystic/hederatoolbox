@@ -1,9 +1,6 @@
-// server.js - MCP server factory, registers all module tools
+// server.js - MCP server factory with consent gate and HITL enforcement
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { HCS_TOOL_DEFINITIONS, executeHCSTool } from "./modules/hcs/tools.js";
 import { COMPLIANCE_TOOL_DEFINITIONS, executeComplianceTool } from "./modules/compliance/tools.js";
 import { GOVERNANCE_TOOL_DEFINITIONS, executeGovernanceTool } from "./modules/governance/tools.js";
@@ -13,9 +10,15 @@ import { CONTRACT_TOOL_DEFINITIONS, executeContractTool } from "./modules/contra
 import { NFT_TOOL_DEFINITIONS, executeNFTTool } from "./modules/nft/tools.js";
 import { BRIDGE_TOOL_DEFINITIONS, executeBridgeTool } from "./modules/bridge/tools.js";
 import { ACCOUNT_TOOL_DEFINITIONS, executeAccountTool } from "./modules/account/tools.js";
+import { LEGAL_TOOL_DEFINITIONS, executeLegalTool } from "./modules/legal/tools.js";
+import { checkConsent } from "./consent.js";
+import { checkHITL } from "./hitl.js";
 
-const ALL_TOOLS = [
+export const ALL_TOOLS = [
+  // Legal / onboarding (always first — agents see these before any paid tool)
+  ...LEGAL_TOOL_DEFINITIONS,
   ...ACCOUNT_TOOL_DEFINITIONS,
+  // Paid tools
   ...HCS_TOOL_DEFINITIONS,
   ...COMPLIANCE_TOOL_DEFINITIONS,
   ...GOVERNANCE_TOOL_DEFINITIONS,
@@ -26,40 +29,59 @@ const ALL_TOOLS = [
   ...BRIDGE_TOOL_DEFINITIONS,
 ];
 
-async function routeTool(name, args) {
+// Tools that bypass consent + HITL entirely
+const FREE_TOOLS = new Set(["account_info", "get_terms", "confirm_terms"]);
+
+async function routeTool(name, args, req) {
+  // Legal tools (no consent check — they ARE the consent flow)
+  if (["get_terms", "confirm_terms"].includes(name)) return executeLegalTool(name, args, req);
+  if (name === "account_info") return executeAccountTool(name, args);
+
+  // ── Consent gate ─────────────────────────────────────────────────────────
+  checkConsent(name, args);
+
+  // ── HITL gate ─────────────────────────────────────────────────────────────
+  const hitlResult = await checkHITL(name, args?.api_key, args);
+  // hitlResult is null (auto) or { tier: "NOTIFY_ONLY", approvalToken }
+  // HARD_STOP throws before reaching here
+
+  // ── Execute tool ──────────────────────────────────────────────────────────
+  let result;
   if (["hcs_monitor", "hcs_query", "hcs_understand"].includes(name)) {
-    return executeHCSTool(name, args);
+    result = await executeHCSTool(name, args);
+  } else if (["hcs_write_record", "hcs_verify_record", "hcs_audit_trail"].includes(name)) {
+    result = await executeComplianceTool(name, args);
+  } else if (["governance_monitor", "governance_analyze", "governance_vote"].includes(name)) {
+    result = await executeGovernanceTool(name, args);
+  } else if (["token_price", "token_analyze", "defi_yields", "token_monitor"].includes(name)) {
+    result = await executeTokenTool(name, args);
+  } else if (["identity_resolve", "identity_verify_kyc", "identity_check_sanctions"].includes(name)) {
+    result = await executeIdentityTool(name, args);
+  } else if (["contract_read", "contract_call", "contract_analyze"].includes(name)) {
+    result = await executeContractTool(name, args);
+  } else if (["nft_collection_info", "nft_token_metadata", "nft_collection_analyze", "token_holders"].includes(name)) {
+    result = await executeNFTTool(name, args);
+  } else if (["bridge_status", "bridge_transfers", "bridge_analyze"].includes(name)) {
+    result = await executeBridgeTool(name, args);
+  } else {
+    throw new Error(`Unknown tool: ${name}`);
   }
-  if (["hcs_write_record", "hcs_verify_record", "hcs_audit_trail"].includes(name)) {
-    return executeComplianceTool(name, args);
+
+  // Attach HITL metadata to result if notify tier
+  if (hitlResult?.tier === "NOTIFY_ONLY") {
+    result._hitl = {
+      tier: "NOTIFY_ONLY",
+      approval_token: hitlResult.approvalToken,
+      note: "This transaction exceeded the notify threshold. A webhook notification has been sent.",
+    };
   }
-  if (["governance_monitor", "governance_analyze", "governance_vote"].includes(name)) {
-    return executeGovernanceTool(name, args);
-  }
-  if (["token_price", "token_analyze", "defi_yields", "token_monitor"].includes(name)) {
-    return executeTokenTool(name, args);
-  }
-  if (["identity_resolve", "identity_verify_kyc", "identity_check_sanctions"].includes(name)) {
-    return executeIdentityTool(name, args);
-  }
-  if (["contract_read", "contract_call", "contract_analyze"].includes(name)) {
-    return executeContractTool(name, args);
-  }
-  if (["nft_collection_info", "nft_token_metadata", "nft_collection_analyze", "token_holders"].includes(name)) {
-    return executeNFTTool(name, args);
-  }
-  if (["bridge_status", "bridge_transfers", "bridge_analyze"].includes(name)) {
-    return executeBridgeTool(name, args);
-  }
-  if (name === "account_info") {
-    return executeAccountTool(name, args);
-  }
-  throw new Error(`Unknown tool: ${name}`);
+
+  return result;
 }
 
-export function createServer() {
+export function createServer(req) {
   const server = new Server(
-    { name: "hedera-mcp-platform", version: "1.8.1" },
+    { name: "hedera-mcp-platform", version: "2.1.0" },
     { capabilities: { tools: {} } }
   );
 
@@ -69,26 +91,32 @@ export function createServer() {
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
-    console.error("Tool: " + name);
+    console.error(`[Tool] ${name} | key: ${args?.api_key || "none"}`);
+
     try {
-      const result = await routeTool(name, args);
-      console.error("Done: " + name);
-      return {
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-      };
+      const result = await routeTool(name, args, req);
+      console.error(`[Done] ${name}`);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
-      console.error("Error: " + name + " - " + error.message);
+      console.error(`[Error] ${name}: ${error.message}`);
+
+      // HITL hard-stop — structured 403 response
+      if (error.hitl) {
+        return {
+          content: [{ type: "text", text: JSON.stringify(error.hitl, null, 2) }],
+          isError: true,
+        };
+      }
+
       return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              error: error.message,
-              tool: name,
-              timestamp: new Date().toISOString(),
-            }),
-          },
-        ],
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            error: error.message,
+            tool: name,
+            timestamp: new Date().toISOString(),
+          }),
+        }],
         isError: true,
       };
     }
@@ -96,5 +124,3 @@ export function createServer() {
 
   return server;
 }
-
-export { ALL_TOOLS };

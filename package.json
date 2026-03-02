@@ -1,6 +1,6 @@
 {
   "name": "hedera-mcp-platform",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "mcpName": "io.github.mountainmystic/hedera-mcp-platform",
   "description": "Hedera blockchain intelligence for AI agents. 27 tools across 9 modules — HCS, compliance, governance, tokens, DeFi, identity, contracts, NFTs, bridges. Pay per call in HBAR. No registration required.",
   "main": "src/index.js",
@@ -39,5 +39,5 @@
     "hedera-hashgraph"
   ],
   "author": "mountainmystic",
-  "license": "MIT"
+  "license": "Proprietary"
 }
