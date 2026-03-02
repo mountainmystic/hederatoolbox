@@ -223,11 +223,13 @@ export async function executeNFTTool(name, args) {
 
     const totalSupply = parseInt(token.total_supply || 0);
 
-    // Fetch top holders
+    // Fetch top holders - NFT balances are serial counts; sort client-side by balance desc
     const holdersRes = await axios.get(
-      `${base}/api/v1/tokens/${args.token_id}/balances?limit=50&order=desc&account.balance.gt=0`
+      `${base}/api/v1/tokens/${args.token_id}/balances?limit=50&account.balance.gt=0`
     ).catch(() => ({ data: { balances: [] } }));
-    const holders = (holdersRes.data.balances || []).filter(h => h.balance > 0);
+    const holders = (holdersRes.data.balances || [])
+      .filter(h => h.balance > 0)
+      .sort((a, b) => parseInt(b.balance || 0) - parseInt(a.balance || 0));
 
     // Fetch recent NFTs
     const nftsRes = await axios.get(
@@ -338,11 +340,13 @@ export async function executeNFTTool(name, args) {
     const totalSupply = parseInt(token.total_supply || 0);
     const decimals = parseInt(token.decimals || 0);
 
-    // Fetch holders - filter out zero balances
+    // Fetch holders - filter zero balances and sort by balance descending client-side
     const holdersRes = await axios.get(
-      `${base}/api/v1/tokens/${args.token_id}/balances?limit=${limit}&order=desc&account.balance.gt=0`
+      `${base}/api/v1/tokens/${args.token_id}/balances?limit=${limit}&account.balance.gt=0`
     );
-    const holders = (holdersRes.data.balances || []).filter(h => h.balance > 0);
+    const holders = (holdersRes.data.balances || [])
+      .filter(h => h.balance > 0)
+      .sort((a, b) => parseInt(b.balance || 0) - parseInt(a.balance || 0));
 
     // Concentration metrics
     const top1 = holders[0]?.balance || 0;

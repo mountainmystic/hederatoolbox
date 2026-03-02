@@ -153,10 +153,19 @@ export async function executeBridgeTool(name, args) {
     const decimals = parseInt(token.decimals || 0);
     const formatAmount = (raw) => (Math.abs(raw) / Math.pow(10, decimals)).toFixed(decimals);
 
+    // Fetch token transfers directly using the token-specific endpoint
     const txRes = await axios.get(
+      `${base}/api/v1/tokens/${args.token_id}/balances?account.balance.gt=0&limit=${limit}`
+    ).catch(() => ({ data: { balances: [] } }));
+    const topHolders = (txRes.data.balances || [])
+      .filter(b => b.balance > 0)
+      .sort((a, b) => parseInt(b.balance || 0) - parseInt(a.balance || 0));
+
+    // Fetch recent transactions involving this token via mirror node token transfers
+    const transfersRes = await axios.get(
       `${base}/api/v1/transactions?limit=${limit}&order=desc&transactiontype=CRYPTOTRANSFER`
     ).catch(() => ({ data: { transactions: [] } }));
-    const allTxs = txRes.data.transactions || [];
+    const allTxs = transfersRes.data.transactions || [];
 
     const transfers = allTxs.flatMap(tx =>
       (tx.token_transfers || [])
@@ -212,6 +221,10 @@ export async function executeBridgeTool(name, args) {
       symbol: token.symbol,
       bridge_info: bridgeInfo,
       total_supply: parseInt(token.total_supply || 0),
+      top_holders: topHolders.slice(0, 10).map(h => ({
+        account: h.account,
+        balance_formatted: formatAmount(h.balance) + " " + token.symbol,
+      })),
       transfers_found: transfers.length,
       transactions_scanned: allTxs.length,
       time_range_hours: timeRangeHours,
@@ -245,9 +258,11 @@ export async function executeBridgeTool(name, args) {
     const formatAmount = (raw) => (Math.abs(raw) / Math.pow(10, decimals)).toLocaleString(undefined, { maximumFractionDigits: decimals });
 
     const holdersRes = await axios.get(
-      `${base}/api/v1/tokens/${args.token_id}/balances?limit=50&order=desc&account.balance.gt=0`
+      `${base}/api/v1/tokens/${args.token_id}/balances?limit=50&account.balance.gt=0`
     ).catch(() => ({ data: { balances: [] } }));
-    const holders = (holdersRes.data.balances || []).filter(h => h.balance > 0);
+    const holders = (holdersRes.data.balances || [])
+      .filter(h => h.balance > 0)
+      .sort((a, b) => parseInt(b.balance || 0) - parseInt(a.balance || 0));
 
     const txRes = await axios.get(
       `${base}/api/v1/transactions?limit=100&order=desc&transactiontype=CRYPTOTRANSFER`

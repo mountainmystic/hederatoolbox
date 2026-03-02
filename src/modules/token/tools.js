@@ -96,11 +96,11 @@ export async function executeTokenTool(name, args) {
     const totalSupply = parseInt(token.total_supply || 0);
     const adjustedSupply = totalSupply / Math.pow(10, decimals);
 
-    // Fetch holder count
+    // Fetch holder count — fetch max and sort client-side by balance desc
     const balRes = await axios.get(
-      `${base}/api/v1/tokens/${args.token_id}/balances?limit=100&order=desc`
+      `${base}/api/v1/tokens/${args.token_id}/balances?limit=100&account.balance.gt=0`
     ).catch(() => ({ data: { balances: [] } }));
-    const holders = balRes.data.balances || [];
+    const holders = (balRes.data.balances || []).sort((a, b) => parseInt(b.balance || 0) - parseInt(a.balance || 0));
 
     // Fetch all tokens from SaucerSwap and find this one
     const saucerTokens = await getSaucerSwapTokens();
@@ -153,11 +153,11 @@ export async function executeTokenTool(name, args) {
     const totalSupply = parseInt(token.total_supply || 0);
     const adjustedSupply = totalSupply / Math.pow(10, decimals);
 
-    // Holder distribution
+    // Holder distribution — fetch max and sort client-side by balance desc
     const balRes = await axios.get(
-      `${base}/api/v1/tokens/${args.token_id}/balances?limit=100&order=desc`
+      `${base}/api/v1/tokens/${args.token_id}/balances?limit=100&account.balance.gt=0`
     ).catch(() => ({ data: { balances: [] } }));
-    const holders = balRes.data.balances || [];
+    const holders = (balRes.data.balances || []).sort((a, b) => parseInt(b.balance || 0) - parseInt(a.balance || 0));
 
     // Concentration analysis
     const top1Pct = holders[0] ? (parseInt(holders[0].balance) / totalSupply * 100).toFixed(1) : 0;
@@ -314,11 +314,11 @@ export async function executeTokenTool(name, args) {
     const decimals = parseInt(token.decimals || 0);
     const totalSupply = parseInt(token.total_supply || 0);
 
-    // Fetch holder balances
+    // Fetch holder balances — fetch max and sort client-side by balance desc
     const balRes = await axios.get(
-      `${base}/api/v1/tokens/${args.token_id}/balances?limit=50&order=desc`
+      `${base}/api/v1/tokens/${args.token_id}/balances?limit=100&account.balance.gt=0`
     ).catch(() => ({ data: { balances: [] } }));
-    const holders = balRes.data.balances || [];
+    const holders = (balRes.data.balances || []).sort((a, b) => parseInt(b.balance || 0) - parseInt(a.balance || 0));
 
     // SaucerSwap price
     const saucerTokens = await getSaucerSwapTokens();

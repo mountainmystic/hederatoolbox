@@ -291,9 +291,15 @@ export async function executeContractTool(name, args) {
     const maxGas = gasUsed.length > 0 ? Math.max(...gasUsed) : 0;
     const minGas = gasUsed.length > 0 ? Math.min(...gasUsed) : 0;
 
-    // Success/failure rate (mirror node returns "SUCCESS" or error string)
-    const successCount = results.filter(r => r.result === "SUCCESS").length;
-    const failCount = results.filter(r => r.result && r.result !== "SUCCESS").length;
+    // Success/failure rate
+    // Mirror node contract results: status field is "0x1" (success) or "0x0" (fail)
+    // result field may contain revert reason strings for failures
+    const successCount = results.filter(r =>
+      r.status === "0x1" || r.result === "SUCCESS" || (!r.status && !r.error_message)
+    ).length;
+    const failCount = results.filter(r =>
+      r.status === "0x0" || (r.error_message && r.error_message.length > 0)
+    ).length;
 
     // Activity trend - group by day
     const dayActivity = {};
@@ -327,7 +333,7 @@ export async function executeContractTool(name, args) {
 
     if (!contract.admin_key) { riskSignals.push("No admin key - contract is immutable (good for decentralization)"); }
     if (contract.deleted) { riskScore += 50; riskSignals.push("Contract has been DELETED"); }
-    if (failCount > successCount && results.length > 5) { riskScore += 20; riskSignals.push("High failure rate - more failed calls than successful ones"); }
+    if (failCount > 0 && failCount > successCount && results.length > 5) { riskScore += 20; riskSignals.push("High failure rate - more failed calls than successful ones"); }
     if (ageDays !== null && ageDays < 7) { riskScore += 15; riskSignals.push("Very new contract - deployed less than 7 days ago"); }
     if (topCallers.length === 1 && results.length > 10) { riskScore += 10; riskSignals.push("Single caller dominates all interactions"); }
     if (stateEntries.length === 0 && results.length > 0) { riskSignals.push("No readable state entries - contract may use non-standard storage"); }
