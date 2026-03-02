@@ -67,7 +67,7 @@ function getAccountInfo(args) {
 
   return {
     service: "HederaIntel — Hedera MCP Platform",
-    description: "27 tools across 9 modules. Pay per call in HBAR. No registration required.",
+    description: "29 tools across 9 modules. Pay per call in HBAR. No registration required.",
 
     how_to_fund: {
       step_1: "Send any amount of HBAR to the platform wallet below.",
