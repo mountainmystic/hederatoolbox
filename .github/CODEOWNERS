@@ -1,0 +1,31 @@
+# CODEOWNERS — Require owner review on any PR touching proprietary server logic
+#
+# GitHub enforces this on protected branches. Any pull request that modifies
+# files matching these patterns requires an approving review from @mountainmystic
+# before it can be merged.
+#
+# To activate: Go to Settings → Branches → Add branch protection rule for `main`
+# and enable "Require review from Code Owners".
+
+# ─── Proprietary server-side IP — always requires owner review ───────────────
+/src/modules/           @mountainmystic
+/src/server.js          @mountainmystic
+/src/server-entry.js    @mountainmystic
+/src/payments.js        @mountainmystic
+/src/db.js              @mountainmystic
+/src/watcher.js         @mountainmystic
+/src/hitl.js            @mountainmystic
+/src/consent.js         @mountainmystic
+/legal/                 @mountainmystic
+/railway.toml           @mountainmystic
+/.env.example           @mountainmystic
+
+# ─── Legal & licensing ───────────────────────────────────────────────────────
+/LICENSE.md             @mountainmystic
+/package.json           @mountainmystic
+/server.json            @mountainmystic
+
+# ─── Public thin client (less sensitive, still owner-reviewed) ───────────────
+/src/index.js           @mountainmystic
+/src/proxy.js           @mountainmystic
+/src/tools.js           @mountainmystic

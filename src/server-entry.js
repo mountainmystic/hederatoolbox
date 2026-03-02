@@ -67,6 +67,21 @@ const httpServer = http.createServer(async (req, res) => {
     return json(res, 200, TERMS);
   }
 
+  // Serve static files from /public (e.g. /public/terms.json)
+  if (req.method === "GET" && url.pathname.startsWith("/public/")) {
+    const filename = url.pathname.replace("/public/", "");
+    const staticPath = path.join(__dirname, "../public", filename);
+    try {
+      const content = readFileSync(staticPath, "utf-8");
+      const ct = filename.endsWith(".json") ? "application/json" : "text/plain";
+      res.writeHead(200, { "Content-Type": ct });
+      res.end(content);
+    } catch {
+      return json(res, 404, { error: "File not found" });
+    }
+    return;
+  }
+
   // HITL approval endpoint — human clicks this URL to unblock a hard-stop
   if (req.method === "GET" && url.pathname.startsWith("/hitl/approve/")) {
     const token = url.pathname.split("/").pop();

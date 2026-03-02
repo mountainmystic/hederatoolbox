@@ -1,0 +1,29 @@
+# Declare text files for consistent line endings
+* text=auto
+
+# ─── Mark server-side IP as export-ignored ──────────────────────────────────
+# These files are excluded from GitHub's "Download ZIP" feature and
+# from `git archive` exports. Anyone who clones the repo still sees the
+# .npmignore-blocked files, but casual downloaders do not.
+#
+# NOTE: The real IP protection is that src/modules/ is server-side-only
+# (blocked by .npmignore) and never executes in the npm thin client.
+
+src/modules/         export-ignore
+src/server.js        export-ignore
+src/server-entry.js  export-ignore
+src/payments.js      export-ignore
+src/db.js            export-ignore
+src/watcher.js       export-ignore
+src/hitl.js          export-ignore
+src/consent.js       export-ignore
+legal/               export-ignore
+docs/                export-ignore
+scripts/             export-ignore
+*.db                 export-ignore
+.env.example         export-ignore
+railway.toml         export-ignore
+
+# ─── Binary files (no diffing) ───────────────────────────────────────────────
+*.db                 binary
+mcp-publisher.exe    binary

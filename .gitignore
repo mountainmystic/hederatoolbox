@@ -1,7 +1,34 @@
+# ─── Dependencies ────────────────────────────────────────────────────────────
 node_modules/
+
+# ─── Secrets — NEVER commit these ────────────────────────────────────────────
 .env
-*.log
-.DS_Store
 .mcpregistry_github_token
 .mcpregistry_registry_token
+
+# ─── Databases — runtime state, not source code ──────────────────────────────
+*.db
 agentlens.db
+hederaintel.db
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+
+# ─── OS artifacts ────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Build artifacts ─────────────────────────────────────────────────────────
+dist/
+build/
+
+# ─── Temp files left by accidental shell commands ────────────────────────────
+curl
+dir
+git
+npm
+
+# NOTE: legal/, src/modules/, src/server.js etc. ARE intentionally committed
+# to this repo for Railway deployment. They are protected from npm by .npmignore
+# and from fork-cloning by LICENSE.md + CODEOWNERS.
