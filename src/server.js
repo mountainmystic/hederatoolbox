@@ -59,7 +59,7 @@ async function routeTool(name, args) {
 
 export function createServer() {
   const server = new Server(
-    { name: "hedera-mcp-platform", version: "1.7.0" },
+    { name: "hedera-mcp-platform", version: "1.8.0" },
     { capabilities: { tools: {} } }
   );
 

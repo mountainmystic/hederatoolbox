@@ -50,7 +50,7 @@ function startHTTPServer() {
       return json(res, 200, {
         status: "ok",
         service: "HederaIntel — Hedera MCP Platform",
-        version: "1.7.0",
+        version: "1.8.0",
         network: process.env.HEDERA_NETWORK,
         account: process.env.HEDERA_ACCOUNT_ID,
         modules: ["hcs", "compliance", "governance", "token", "identity", "contract", "nft", "bridge"],

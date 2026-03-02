@@ -60,7 +60,7 @@ Then in your agent, call `account_info` first — it will tell you everything yo
 git clone https://github.com/mountainmystic/hedera-mcp-platform.git
 cd hedera-mcp-platform
 npm install
-cp .env.example .env   # fill in your Hedera credentials
+cp .env.example .env   # fill in your credentials
 npm start
 ```
 
@@ -75,8 +75,9 @@ npm start
 | `HEDERA_ACCOUNT_ID` | Your Hedera operator account (e.g. `0.0.123456`) | Yes |
 | `HEDERA_PRIVATE_KEY` | ECDSA private key for signing transactions | Yes |
 | `HEDERA_NETWORK` | `mainnet` or `testnet` | Yes |
-| `OPENAI_API_KEY` | GPT-4o Mini for AI-powered analysis tools | Yes |
-| `ADMIN_SECRET` | Secret header for admin provisioning endpoints | Yes |
+| `ANTHROPIC_API_KEY` | Claude Haiku for AI-powered analysis tools | Yes |
+| `ADMIN_SECRET` | Secret header for admin provisioning endpoints | No |
+| `HCS_COMPLIANCE_TOPIC_ID` | Default HCS topic for compliance tools (e.g. `0.0.10305125`) | No |
 | `PORT` | HTTP server port (default: `3000`) | No |
 
 ---
@@ -120,6 +121,8 @@ Write and verify tamper-evident records on Hedera — an immutable on-chain comp
 | `hcs_write_record` | Write a compliance record to HCS with timestamp proof | 2.00 HBAR |
 | `hcs_verify_record` | Verify a record exists and has not been tampered with | 0.50 HBAR |
 | `hcs_audit_trail` | Full chronological audit history for an entity | 1.00 HBAR |
+
+All compliance tools default to the shared HederaIntel platform topic (`0.0.10305125`) when no `topic_id` is supplied.
 
 **Example use cases:** KYC approval records, trade approvals, document signing workflows, regulatory audit trails.
 
@@ -297,8 +300,7 @@ Returns current status, network, all tool names, and per-tool pricing.
 ## Known Limitations
 
 - **`token_price`** — Spot price returns `null` pending SaucerSwap API key. Market cap and volume are available.
-- **`token_holders`** — Sorted by account ID rather than balance (mirror node limitation). Balances are accurate; sort client-side if ranking is needed.
-- **`bridge_analyze`** — Custodian flow may show zeros for very low-activity bridged tokens with fewer than 100 recent transfers.
+- **`bridge_transfers`** — Generic network-wide transfer scanning may return low counts for very low-activity bridged tokens. Top holder data is always returned.
 
 ---
 
@@ -306,7 +308,7 @@ Returns current status, network, all tool names, and per-tool pricing.
 
 - [ ] SaucerSwap API integration for live token prices *(in progress)*
 - [ ] x402 per-call REST layer — pay per request with no account needed, once Hedera mainnet support matures
-- [ ] AgentLens developer portal and dashboard
+- [ ] HederaIntel developer portal and dashboard
 - [ ] Webhook/subscription support for real-time topic monitoring
 
 ---
