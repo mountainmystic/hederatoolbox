@@ -6,6 +6,7 @@
 
 # ─── Server-only source (remote brain — stays on Railway, never ships to npm) ──
 src/server.js
+src/server-entry.js
 src/payments.js
 src/db.js
 src/watcher.js

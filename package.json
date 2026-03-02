@@ -13,8 +13,10 @@
     "url": "https://github.com/mountainmystic/hedera-mcp-platform.git"
   },
   "scripts": {
-    "start": "node --experimental-sqlite src/index.js",
-    "dev": "node --experimental-sqlite --watch src/index.js"
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "server": "node --experimental-sqlite src/server-entry.js",
+    "server:dev": "node --experimental-sqlite --watch src/server-entry.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0"
