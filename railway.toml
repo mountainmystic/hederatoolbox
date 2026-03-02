@@ -5,5 +5,5 @@ builder = "nixpacks"
 nixPkgs = ["nodejs_22"]
 
 [deploy]
-startCommand = "npm start"
+startCommand = "node --experimental-sqlite src/index.js"
 restartPolicyType = "always"
