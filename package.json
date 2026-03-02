@@ -19,7 +19,11 @@
     "server:dev": "node --experimental-sqlite --watch src/server-entry.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0"
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@hashgraph/sdk": "^2.46.0",
+    "@anthropic-ai/sdk": "^0.39.0",
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5"
   },
   "keywords": [
     "hedera",
