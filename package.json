@@ -1,26 +1,38 @@
 {
   "name": "hedera-mcp-platform",
-  "version": "1.8.1",
+  "version": "2.0.0",
   "mcpName": "io.github.mountainmystic/hedera-mcp-platform",
-  "description": "Complete Hedera ecosystem intelligence platform for AI agents. 27 tools across 9 modules covering HCS, compliance, governance, tokens, DeFi, identity, contracts, NFTs, and cross-chain bridges. Agent-native HBAR payments — send HBAR, get access, no registration required.",
+  "description": "Hedera blockchain intelligence for AI agents. 27 tools across 9 modules — HCS, compliance, governance, tokens, DeFi, identity, contracts, NFTs, bridges. Pay per call in HBAR. No registration required.",
   "main": "src/index.js",
   "type": "module",
   "engines": {
-    "node": ">=22.5.0"
+    "node": ">=18.0.0"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/mountainmystic/hedera-mcp-platform.git"
   },
   "scripts": {
-    "start": "node --experimental-sqlite src/index.js",
-    "dev": "node --experimental-sqlite --watch src/index.js"
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "server": "node --experimental-sqlite src/index.js"
   },
   "dependencies": {
-    "@hashgraph/sdk": "^2.46.0",
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "axios": "^1.7.7",
-    "dotenv": "^16.4.5",
-    "@anthropic-ai/sdk": "^0.39.0"
-  }
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "keywords": [
+    "hedera",
+    "mcp",
+    "blockchain",
+    "ai-agent",
+    "hbar",
+    "hcs",
+    "token",
+    "nft",
+    "defi",
+    "model-context-protocol",
+    "hedera-hashgraph"
+  ],
+  "author": "mountainmystic",
+  "license": "MIT"
 }

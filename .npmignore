@@ -1,7 +1,34 @@
+# ─── Secrets & local config ───────────────────────────────────────────────
 .env
 .env.example
 .mcpregistry_registry_token
 .mcpregistry_github_token
-mcp-publisher.exe
+
+# ─── Server-only source (remote brain — stays on Railway, never ships to npm) ──
+src/server.js
+src/payments.js
+src/db.js
+src/watcher.js
+src/modules/
+
+# ─── Dev & build artifacts ────────────────────────────────────────────────
 node_modules/
+*.db
+agentlens.db
+hederaintel.db
+
+# ─── Railway / deployment config ─────────────────────────────────────────
 railway.toml
+
+# ─── Tooling ──────────────────────────────────────────────────────────────
+mcp-publisher.exe
+scripts/
+curl
+dir
+git
+npm
+
+# ─── Misc ────────────────────────────────────────────────────────────────
+journal.txt
+server.json
+package-lock.json
