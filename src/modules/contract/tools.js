@@ -1,6 +1,118 @@
 // contract/tools.js - Smart Contract Abstraction tool definitions and handlers
 import axios from "axios";
 import { chargeForTool } from "../../payments.js";
+// ---------------------------------------------------------------------------
+// ABI encoding helpers — pure JS, no extra dependencies
+// ---------------------------------------------------------------------------
+
+// Minimal keccak256 using js-sha3 (transitive dep via @hashgraph/sdk)
+// We import ethers which is bundled with @hashgraph/sdk
+import { ethers } from "ethers";
+
+function buildSelector(signature) {
+  const hash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(signature));
+  return hash.slice(0, 10); // 0x + 8 hex chars = 4 bytes
+}
+
+// ABI-encode a single value into a 32-byte hex slot (no 0x prefix)
+function encodeParam(value) {
+  // address
+  if (typeof value === "string" && /^0x[0-9a-fA-F]{40}$/.test(value)) {
+    return value.slice(2).toLowerCase().padStart(64, "0");
+  }
+  // Hedera ID -> convert to EVM address (0x + zero-padded account number)
+  if (typeof value === "string" && /^\d+\.\d+\.(\d+)$/.test(value)) {
+    const parts = value.split(".");
+    const num = parseInt(parts[2], 10);
+    return num.toString(16).padStart(64, "0");
+  }
+  // boolean
+  if (value === "true" || value === true) return "1".padStart(64, "0");
+  if (value === "false" || value === false) return "0".padStart(64, "0");
+  // hex bytes32
+  if (typeof value === "string" && /^0x[0-9a-fA-F]{1,64}$/.test(value)) {
+    return value.slice(2).padStart(64, "0");
+  }
+  // uint256 / plain number or numeric string
+  const num = BigInt(value);
+  return num.toString(16).padStart(64, "0");
+}
+
+// Build full calldata: selector + encoded params
+function buildCalldata(functionSignature, params = []) {
+  const selector = buildSelector(functionSignature);
+  if (!params || params.length === 0) return selector;
+  const encoded = params.map(encodeParam).join("");
+  return selector + encoded;
+}
+
+// Infer the most likely full function signature from name + params
+// e.g. "balanceOf" + ["0x1234..."] -> "balanceOf(address)"
+function inferSignature(functionName, params = []) {
+  if (!params || params.length === 0) return `${functionName}()`;
+
+  const types = params.map(p => {
+    if (typeof p === "string" && /^0x[0-9a-fA-F]{40}$/.test(p)) return "address";
+    if (typeof p === "string" && /^\d+\.\d+\.\d+$/.test(p)) return "address"; // Hedera ID
+    if (p === "true" || p === "false") return "bool";
+    if (typeof p === "string" && /^0x[0-9a-fA-F]{64}$/.test(p)) return "bytes32";
+    if (typeof p === "string" && /^\d+$/.test(p)) return "uint256";
+    return "uint256"; // safe fallback
+  });
+  return `${functionName}(${types.join(",")})`;
+}
+
+// Decode a 32-byte hex slot into human-readable candidates
+function decodeSlot(hex) {
+  const clean = hex.replace("0x", "").padStart(64, "0");
+  const candidates = {};
+  // uint256
+  try { candidates.as_uint256 = BigInt("0x" + clean).toString(); } catch {}
+  // address (last 20 bytes)
+  candidates.as_address = "0x" + clean.slice(24);
+  // bool
+  candidates.as_bool = clean === "0".repeat(63) + "1" ? true
+    : clean === "0".repeat(64) ? false : null;
+  return candidates;
+}
+
+// Decode ABI result: handles single slot, string, and uint256 returns
+function decodeResult(hex) {
+  const raw = hex.replace("0x", "");
+  if (raw.length === 0) return { raw_hex: hex, note: "Empty response" };
+
+  // Single 32-byte slot
+  if (raw.length === 64) {
+    return { raw_hex: hex, ...decodeSlot(raw), note: "Single 32-byte slot decoded" };
+  }
+
+  // Dynamic type (string/bytes): offset(32) + length(32) + data
+  if (raw.length >= 128) {
+    try {
+      const lengthHex = raw.slice(64, 128);
+      const length = parseInt(lengthHex, 16);
+      if (length > 0 && length <= 256) {
+        const dataHex = raw.slice(128, 128 + length * 2);
+        const bytes = [];
+        for (let i = 0; i < dataHex.length; i += 2) {
+          bytes.push(parseInt(dataHex.substr(i, 2), 16));
+        }
+        const str = String.fromCharCode(...bytes).replace(/\0/g, "").trim();
+        if (str && /^[\x20-\x7E]+$/.test(str)) {
+          return { raw_hex: hex, as_string: str, note: "Decoded as ABI string" };
+        }
+      }
+    } catch {}
+  }
+
+  // Multiple 32-byte slots — decode each
+  const slots = [];
+  for (let i = 0; i < raw.length; i += 64) {
+    const slot = raw.slice(i, i + 64);
+    if (slot.length === 64) slots.push(decodeSlot(slot));
+  }
+  return { raw_hex: hex, slots, note: `${slots.length} slot(s) decoded` };
+}
 
 function getMirrorNodeBase() {
   return process.env.HEDERA_NETWORK === "mainnet"
@@ -127,106 +239,74 @@ export async function executeContractTool(name, args) {
     const payment = chargeForTool("contract_call", args.api_key);
     const base = getMirrorNodeBase();
 
-    // Fetch contract info first
+    // Fetch contract info
     const contractRes = await axios.get(`${base}/api/v1/contracts/${args.contract_id}`)
       .catch(() => ({ data: {} }));
     const contract = contractRes.data;
-
-    // Build function selector (first 4 bytes of keccak256 of function signature)
-    // For common functions we use known selectors
-    const KNOWN_SELECTORS = {
-      "name":           "0x06fdde03",
-      "symbol":         "0x95d89b41",
-      "decimals":       "0x313ce567",
-      "totalSupply":    "0x18160ddd",
-      "balanceOf":      "0x70a08231",
-      "owner":          "0x8da5cb5b",
-      "paused":         "0x5c975abb",
-      "getOwner":       "0x893d20e8",
-      "getFeeSchedule": "0xb8d24c4d",
-    };
+    const evmTarget = contract.evm_address || args.contract_id;
 
     const funcName = args.function_name;
-    const selector = KNOWN_SELECTORS[funcName] || null;
+    const params = args.function_params || [];
 
-    // Try mirror node eth_call simulation via contract results
+    // Build signature: use explicit abi_hint signature if provided (e.g. "balanceOf(address)")
+    // Otherwise infer from function name and param types
+    let signature;
+    if (args.abi_hint && args.abi_hint.includes("(")) {
+      // User passed a full signature as abi_hint e.g. "balanceOf(address)"
+      signature = args.abi_hint;
+    } else {
+      signature = inferSignature(funcName, params);
+    }
+
+    const calldata = buildCalldata(signature, params);
+    const selectorUsed = calldata.slice(0, 10);
+
+    // Execute via mirror node eth_call
     let callResult = null;
     let callError = null;
-
-    if (selector) {
-      try {
-        // Use mirror node to simulate the call
-        const callRes = await axios.post(
-          `${base}/api/v1/contracts/call`,
-          {
-            data: selector,
-            to: contract.evm_address || args.contract_id,
-            gas: 100000,
-            gasPrice: 0,
-          }
-        );
-        callResult = callRes.data;
-      } catch (e) {
-        callError = e.response?.data?.detail || e.message;
-      }
+    try {
+      const callRes = await axios.post(
+        `${base}/api/v1/contracts/call`,
+        {
+          data: calldata,
+          to: evmTarget,
+          gas: 400000,
+          gasPrice: 0,
+          estimate: false,
+        }
+      );
+      callResult = callRes.data;
+    } catch (e) {
+      callError = e.response?.data?.detail || e.response?.data?.message || e.message;
     }
 
-    // Also fetch recent results for this function from history
+    // Decode the result
+    let decoded = null;
+    if (callResult?.result && callResult.result !== "0x") {
+      decoded = decodeResult(callResult.result);
+    }
+
+    // Recent call history
     const resultsRes = await axios.get(
-      `${base}/api/v1/contracts/${args.contract_id}/results?limit=25&order=desc`
+      `${base}/api/v1/contracts/${args.contract_id}/results?limit=10&order=desc`
     ).catch(() => ({ data: { results: [] } }));
     const results = resultsRes.data.results || [];
-
-    // Parse call result if available
-    let parsedResult = null;
-    if (callResult?.result) {
-      const hex = callResult.result.replace("0x", "");
-      // Try to decode common return types
-      if (hex.length === 64) {
-        // Could be uint256 or address
-        const asNumber = parseInt(hex, 16);
-        const asAddress = "0x" + hex.slice(24);
-        parsedResult = {
-          raw_hex: "0x" + hex,
-          as_uint256: asNumber.toString(),
-          as_address: asAddress,
-          note: "Raw result decoded as both uint256 and address - interpret based on function context",
-        };
-      } else if (hex.length > 64) {
-        // Could be a string
-        try {
-          const strData = hex.slice(128);
-          const bytes = [];
-          for (let i = 0; i < strData.length; i += 2) {
-            bytes.push(parseInt(strData.substr(i, 2), 16));
-          }
-          const str = String.fromCharCode(...bytes).replace(/\0/g, "").trim();
-          if (str.length > 0 && str.length < 100) {
-            parsedResult = { raw_hex: "0x" + hex, as_string: str };
-          } else {
-            parsedResult = { raw_hex: "0x" + hex };
-          }
-        } catch (e) {
-          parsedResult = { raw_hex: "0x" + hex };
-        }
-      }
-    }
 
     return {
       contract_id: args.contract_id,
       evm_address: contract.evm_address || null,
       function_called: funcName,
-      function_params: args.function_params || [],
-      abi_hint: args.abi_hint || null,
-      selector_used: selector,
-      call_result: parsedResult,
+      signature_used: signature,
+      selector_used: selectorUsed,
+      params_encoded: params,
+      calldata_sent: calldata,
+      call_result: decoded,
       call_error: callError,
-      selector_known: !!selector,
-      note: !selector
-        ? "Function '" + funcName + "' is not in the known selector list. Known functions: " + Object.keys(KNOWN_SELECTORS).join(", ")
-        : callError
-        ? "Call simulation failed - contract may require parameters or use a non-standard ABI."
-        : "Call completed successfully.",
+      note: callError
+        ? "Call failed — check signature or params. You can pass a full ABI signature as abi_hint e.g. 'balanceOf(address)'."
+        : decoded
+        ? "Call succeeded."
+        : "Call returned empty result — function may have no return value or is write-only.",
       recent_call_history: results.slice(0, 5).map(r => ({
         timestamp: r.timestamp,
         from: r.from,
