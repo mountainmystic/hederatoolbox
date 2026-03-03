@@ -1,130 +1,168 @@
-// hitl.js — Human-in-the-Loop enforcement middleware
+// hitl.js — Human-in-the-Loop enforcement for HederaIntel
 //
-// Tier thresholds (HBAR value of the transaction being requested):
-//   AUTO_APPROVE  : < 500 HBAR   → execute immediately
-//   NOTIFY_ONLY   : 500–5000 HBAR → execute, then fire webhook
-//   HARD_STOP     : > 10,000 HBAR → block, return 403 with approval URL
+// HITL is scoped to irreversible on-chain write operations and runaway
+// loop detection. It is NOT a general balance gate.
 //
-// Admin operations (updateAdminKey etc.) always trigger HARD_STOP regardless of value.
-//
-// For our current tool set, HBAR amounts are small (max 2 HBAR per call).
-// This middleware is forward-looking for when governance_vote or hcs_write_record
-// are used in high-value automated workflows, and for future large-transfer tools.
+// Tiers:
+//   hard_stop  — governance_vote: blocked until human approves via URL
+//   notify     — hcs_write_record: executes immediately + webhook notification
+//   loop_guard — any tool called >20 times in 60s by same api_key: blocked + alert
+//   auto       — everything else: execute immediately, no HITL
 
 import crypto from "crypto";
-import { createHITLEvent, markWebhookSent } from "./db.js";
+import axios from "axios";
+import {
+  createHITLEvent,
+  getHITLEvent,
+  markWebhookSent,
+} from "./db.js";
 
-// HITL thresholds in HBAR
-const TIER = {
-  AUTO_APPROVE: 500,
-  NOTIFY_ONLY_MAX: 5000,
-  HARD_STOP: 10_000,
+// ─────────────────────────────────────────────
+// Configuration
+// ─────────────────────────────────────────────
+
+export const HITL_TIERS = {
+  governance_vote:  "hard_stop",
+  hcs_write_record: "notify",
 };
 
-// Administrative operations that always require human approval
-const ADMIN_OPS = new Set([
-  "updateAdminKey",
-  "deleteAccount",
-  "freezeAccount",
-  "wipeAccount",
-]);
+const LOOP_WINDOW_MS = 60 * 1000; // 60 seconds
+const LOOP_THRESHOLD = 20;        // calls within window before blocking
 
-// Tools that carry write/value risk — map to their HBAR cost for HITL evaluation
-// Most tools cost < 2 HBAR so they auto-approve. This is ready for future high-value tools.
-const TOOL_HBAR_VALUE = {
-  hcs_write_record:  2.0,
-  governance_vote:   2.0,
-  hcs_audit_trail:   1.0,
-  contract_analyze:  1.0,
-  contract_call:     0.5,
-  hcs_understand:    0.5,
-  hcs_verify_record: 0.5,
-  governance_analyze: 0.5,
-  identity_check_sanctions: 0.5,
-  bridge_analyze:    0.5,
-  // All others default to their HBAR cost (< 0.3 HBAR) → always AUTO_APPROVE
-};
+// In-memory call tracker for loop detection (resets on restart — intentional,
+// loop guard is a live-session safety net, not a persistent quota)
+const callLog = {}; // { "api_key:tool_name": [timestamp, ...] }
 
-const APPROVAL_BASE_URL = process.env.APPROVAL_BASE_URL || "https://hedera-mcp-platform-production.up.railway.app";
-const WEBHOOK_URL = process.env.HITL_WEBHOOK_URL || null;
+// ─────────────────────────────────────────────
+// Loop detection
+// ─────────────────────────────────────────────
 
-/**
- * Evaluate HITL tier for a tool call.
- * Returns null for AUTO_APPROVE.
- * Returns { tier: "NOTIFY_ONLY", approvalToken } for notify tier (call proceeds, webhook fires async).
- * Throws a structured error object for HARD_STOP.
- *
- * @param {string} toolName
- * @param {string} apiKey
- * @param {object} args
- * @returns {object|null}
- */
-export async function checkHITL(toolName, apiKey, args) {
-  const hbarValue = TOOL_HBAR_VALUE[toolName] ?? 0.1;
-  const isAdminOp = args?.function_name && ADMIN_OPS.has(args.function_name);
-
-  // HARD STOP: admin operations or value > threshold
-  if (isAdminOp || hbarValue > TIER.HARD_STOP) {
-    const approvalToken = crypto.randomUUID();
-    const approvalUrl = `${APPROVAL_BASE_URL}/hitl/approve/${approvalToken}`;
-
-    createHITLEvent(apiKey, toolName, hbarValue, "HARD_STOP", approvalToken);
-
-    const err = new Error("HUMAN_APPROVAL_REQUIRED");
-    err.hitl = {
-      status: 403,
-      tier: "HARD_STOP",
-      reason: isAdminOp
-        ? `Administrative operation '${args.function_name}' requires human approval.`
-        : `Transaction value ${hbarValue} HBAR exceeds the ${TIER.HARD_STOP} HBAR hard-stop threshold.`,
-      approval_url: approvalUrl,
-      approval_token: approvalToken,
-      instruction: "A human operator must approve this action at the URL above before it can execute.",
-    };
-    throw err;
-  }
-
-  // NOTIFY ONLY: value in notify range
-  if (hbarValue >= TIER.AUTO_APPROVE) {
-    const approvalToken = crypto.randomUUID();
-    createHITLEvent(apiKey, toolName, hbarValue, "NOTIFY_ONLY", approvalToken);
-
-    // Fire webhook asynchronously — don't block the tool call
-    if (WEBHOOK_URL) {
-      fireWebhook(approvalToken, apiKey, toolName, hbarValue).catch((e) =>
-        console.error("[HITL] Webhook failed:", e.message)
-      );
-    }
-
-    return { tier: "NOTIFY_ONLY", approvalToken };
-  }
-
-  // AUTO APPROVE: value < threshold, not an admin op
-  return null;
+function trackCall(apiKey, toolName) {
+  const key = `${apiKey}:${toolName}`;
+  const now = Date.now();
+  if (!callLog[key]) callLog[key] = [];
+  callLog[key] = callLog[key].filter(t => now - t < LOOP_WINDOW_MS);
+  callLog[key].push(now);
+  return callLog[key].length;
 }
 
-async function fireWebhook(approvalToken, apiKey, toolName, hbarValue) {
-  const payload = {
-    event: "hitl_notify",
-    tier: "NOTIFY_ONLY",
-    api_key: apiKey,
-    tool: toolName,
-    amount_hbar: hbarValue,
-    approval_token: approvalToken,
-    timestamp: new Date().toISOString(),
-  };
+// ─────────────────────────────────────────────
+// Webhook delivery
+// ─────────────────────────────────────────────
 
-  const res = await fetch(WEBHOOK_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    signal: AbortSignal.timeout(10_000),
-  });
-
-  if (res.ok) {
-    markWebhookSent(approvalToken);
-    console.error(`[HITL] Webhook sent for token ${approvalToken}`);
-  } else {
-    console.error(`[HITL] Webhook HTTP ${res.status} for token ${approvalToken}`);
+async function sendWebhook(payload) {
+  const url = process.env.HITL_WEBHOOK_URL;
+  if (!url) return false;
+  try {
+    await axios.post(url, payload, { timeout: 5000 });
+    return true;
+  } catch (e) {
+    console.error("[HITL] Webhook delivery failed:", e.message);
+    return false;
   }
+}
+
+// ─────────────────────────────────────────────
+// Main enforcement function
+//
+// Call this BEFORE executing any tool.
+// Returns { proceed: true } if the tool should run.
+// Returns { proceed: false, error: "..." } if blocked.
+// ─────────────────────────────────────────────
+
+export async function enforceHITL(toolName, apiKey, costHbar) {
+  const baseUrl = process.env.APPROVAL_BASE_URL
+    || "https://hedera-mcp-platform-production.up.railway.app";
+
+  // ── Loop guard (applies to all tools) ───────────────────────────────────
+  const callCount = trackCall(apiKey, toolName);
+  if (callCount > LOOP_THRESHOLD) {
+    await sendWebhook({
+      event: "loop_detected",
+      tool: toolName,
+      api_key: apiKey,
+      call_count: callCount,
+      window_seconds: LOOP_WINDOW_MS / 1000,
+      timestamp: new Date().toISOString(),
+    });
+    return {
+      proceed: false,
+      hitl_tier: "loop_guard",
+      error:
+        `Loop guard triggered: "${toolName}" has been called ${callCount} times in the last ` +
+        `${LOOP_WINDOW_MS / 1000} seconds by this API key. ` +
+        `Temporarily blocked to prevent runaway execution. ` +
+        `Wait ${LOOP_WINDOW_MS / 1000} seconds and retry.`,
+    };
+  }
+
+  const tier = HITL_TIERS[toolName];
+
+  // ── Auto tier — no HITL needed ──────────────────────────────────────────
+  if (!tier) return { proceed: true };
+
+  // ── Hard stop — governance_vote ─────────────────────────────────────────
+  if (tier === "hard_stop") {
+    const approvalToken = crypto.randomUUID();
+    const approvalUrl = `${baseUrl}/hitl/approve/${approvalToken}`;
+
+    createHITLEvent(apiKey, toolName, costHbar, "hard_stop", approvalToken);
+
+    await sendWebhook({
+      event: "hard_stop",
+      tool: toolName,
+      api_key: apiKey,
+      cost_hbar: costHbar,
+      approval_url: approvalUrl,
+      message: `Human approval required before ${toolName} can execute.`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return {
+      proceed: false,
+      hitl_tier: "hard_stop",
+      approval_token: approvalToken,
+      approval_url: approvalUrl,
+      error:
+        `HUMAN APPROVAL REQUIRED: "${toolName}" is an irreversible on-chain write operation. ` +
+        `A human operator must approve this action before it can execute. ` +
+        `Approval URL: ${approvalUrl} — ` +
+        `Once approved, retry this tool call with the same parameters. ` +
+        `Approval token: ${approvalToken}`,
+    };
+  }
+
+  // ── Notify tier — hcs_write_record ──────────────────────────────────────
+  if (tier === "notify") {
+    const approvalToken = crypto.randomUUID();
+
+    createHITLEvent(apiKey, toolName, costHbar, "notify", approvalToken);
+
+    // Fire-and-forget — notify does NOT block execution
+    sendWebhook({
+      event: "notify",
+      tool: toolName,
+      api_key: apiKey,
+      cost_hbar: costHbar,
+      message: `Write operation "${toolName}" executed. Notification only — no approval required.`,
+      timestamp: new Date().toISOString(),
+    }).then(sent => {
+      if (sent) markWebhookSent(approvalToken);
+    });
+
+    return { proceed: true, hitl_tier: "notify", notified: true };
+  }
+
+  return { proceed: true };
+}
+
+// ─────────────────────────────────────────────
+// Check if a hard_stop event has been approved
+// ─────────────────────────────────────────────
+
+export function checkApproval(approvalToken) {
+  const event = getHITLEvent(approvalToken);
+  if (!event) return { approved: false, reason: "Token not found" };
+  if (event.status === "approved") return { approved: true, event };
+  return { approved: false, reason: "Pending human approval", event };
 }
