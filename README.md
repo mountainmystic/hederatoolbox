@@ -206,7 +206,7 @@ The npm package contains no business logic — only tool schemas and a proxy. In
 Requires your own Hedera operator account, Anthropic API key, and SaucerSwap API key.
 
 ```bash
-git clone https://github.com/mountainmystic/hedera-mcp-platform.git
+git clone https://github.com/mountainmystic/hederaintel.git
 cd hedera-mcp-platform
 npm install
 cp .env.example .env
