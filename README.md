@@ -41,7 +41,7 @@ HederaIntel uses **agent-native HBAR payments**. No accounts, no OAuth, no email
 1. get_terms        -> read the Terms of Service         (free)
 2. confirm_terms    -> record consent                    (free)
 3. account_info     -> get platform wallet + pricing     (free)
-4. send HBAR        -> your account ID becomes your key  (auto, ~30s)
+4. send HBAR        -> your account ID becomes your key  (auto-provisioned)
 5. call any tool    -> pass your Hedera account ID as api_key
 ```
 
@@ -207,7 +207,7 @@ Requires your own Hedera operator account, Anthropic API key, and SaucerSwap API
 
 ```bash
 git clone https://github.com/mountainmystic/hederaintel.git
-cd hedera-mcp-platform
+cd hederaintel
 npm install
 cp .env.example .env
 npm run server
@@ -250,7 +250,7 @@ Node.js 22.5.0 or higher required (uses `node:sqlite`).
 | | |
 |---|---|
 | npm | https://www.npmjs.com/package/hedera-mcp-platform |
-| MCP Registry | https://registry.modelcontextprotocol.io — search `hederaintel` |
+| MCP Registry | https://registry.modelcontextprotocol.io — search `hedera-mcp-platform` |
 | Live endpoint | https://hedera-mcp-platform-production.up.railway.app/mcp |
 | Terms | https://hedera-mcp-platform-production.up.railway.app/terms |
 | Health | https://hedera-mcp-platform-production.up.railway.app/health |
