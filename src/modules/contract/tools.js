@@ -277,7 +277,11 @@ export async function executeContractTool(name, args) {
       );
       callResult = callRes.data;
     } catch (e) {
-      callError = e.response?.data?.detail || e.response?.data?.message || e.message;
+      callError = e.response?.data?._status?.messages?.[0]?.message
+        || e.response?.data?.detail
+        || e.response?.data?.message
+        || JSON.stringify(e.response?.data)
+        || e.message;
     }
 
     // Decode the result
