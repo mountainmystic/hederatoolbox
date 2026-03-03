@@ -191,9 +191,9 @@ The npm package contains no business logic — only tool schemas and a proxy. In
 
 ---
 
-## What's New in v2.7.0
+## What's New in v2.8.0
 
-- **HITL enforcement** — `governance_vote` requires human approval before casting; `hcs_write_record` sends operator webhook on every write; loop guard blocks runaway agents
+- **Leaner tool set** — removed `governance_vote` and the entire bridge module; 24 focused tools across 8 modules
 - **`contract_call` return type decoding** — pass `return_types` for precise ABI decoding of tuples, arrays, and multi-value returns
 - **EVM address support** — all identity and contract tools accept `0x...` addresses directly
 - **Live HBAR/USD pricing** — `account_info` shows real-time USD cost for every tool

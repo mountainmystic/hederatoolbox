@@ -8,7 +8,6 @@ import { TOKEN_TOOL_DEFINITIONS, executeTokenTool } from "./modules/token/tools.
 import { IDENTITY_TOOL_DEFINITIONS, executeIdentityTool } from "./modules/identity/tools.js";
 import { CONTRACT_TOOL_DEFINITIONS, executeContractTool } from "./modules/contract/tools.js";
 import { NFT_TOOL_DEFINITIONS, executeNFTTool } from "./modules/nft/tools.js";
-import { BRIDGE_TOOL_DEFINITIONS, executeBridgeTool } from "./modules/bridge/tools.js";
 import { ACCOUNT_TOOL_DEFINITIONS, executeAccountTool } from "./modules/account/tools.js";
 import { LEGAL_TOOL_DEFINITIONS, executeLegalTool } from "./modules/legal/tools.js";
 import { checkConsent } from "./consent.js";
@@ -25,7 +24,6 @@ export const ALL_TOOLS = [
   ...IDENTITY_TOOL_DEFINITIONS,
   ...CONTRACT_TOOL_DEFINITIONS,
   ...NFT_TOOL_DEFINITIONS,
-  ...BRIDGE_TOOL_DEFINITIONS,
 ];
 
 // Tools that bypass consent + HITL entirely
@@ -55,8 +53,6 @@ async function routeTool(name, args, req) {
     result = await executeContractTool(name, args);
   } else if (["nft_collection_info", "nft_token_metadata", "nft_collection_analyze", "token_holders"].includes(name)) {
     result = await executeNFTTool(name, args);
-  } else if (["bridge_status", "bridge_transfers", "bridge_analyze"].includes(name)) {
-    result = await executeBridgeTool(name, args);
   } else {
     throw new Error(`Unknown tool: ${name}`);
   }

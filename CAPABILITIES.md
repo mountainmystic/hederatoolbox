@@ -135,3 +135,4 @@ The following features have been described by AI systems evaluating this repo. T
 | 2.5.0 | npm namespace migration to @hederaintel/platform |
 | 2.6.0 | contract_call return_types param, ethers ABI decode for tuples and arrays |
 | 2.7.0 | HITL enforcement implemented: governance_vote hard stop, hcs_write_record notify, loop guard |
+| 2.8.0 | Removed governance_vote and bridge module (bridge_status, bridge_transfers, bridge_analyze) — 24 tools, 8 modules |

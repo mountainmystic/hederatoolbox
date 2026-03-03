@@ -1,7 +1,6 @@
 // governance/tools.js - Governance Intelligence tool definitions and handlers
 import axios from "axios";
 import { chargeForTool } from "../../payments.js";
-import { enforceHITL } from "../../hitl.js";
 
 function getMirrorNodeBase() {
   return process.env.HEDERA_NETWORK === "mainnet"
@@ -35,23 +34,6 @@ export const GOVERNANCE_TOOL_DEFINITIONS = [
         api_key: { type: "string", description: "Your HederaIntel API key" },
       },
       required: ["token_id", "proposal_id", "api_key"],
-    },
-  },
-  {
-    name: "governance_vote",
-    description: "Cast a governance vote on-chain via HCS, permanently recording your vote for a proposal. REQUIRES HUMAN APPROVAL — this is an irreversible on-chain write. First call without approval_token to get the approval URL. After a human approves at that URL, retry with the approval_token to cast the vote. Costs 2 HBAR.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        topic_id: { type: "string", description: "HCS topic ID where votes are recorded" },
-        proposal_id: { type: "string", description: "The proposal ID you are voting on" },
-        vote: { type: "string", description: "Your vote: 'yes', 'no', or 'abstain'" },
-        voter_id: { type: "string", description: "Your Hedera account ID (e.g. 0.0.123456)" },
-        rationale: { type: "string", description: "Optional short rationale for your vote" },
-        approval_token: { type: "string", description: "Approval token returned after human approves the vote at the approval URL" },
-        api_key: { type: "string", description: "Your HederaIntel API key" },
-      },
-      required: ["topic_id", "proposal_id", "vote", "voter_id", "api_key"],
     },
   },
 ];
@@ -230,73 +212,6 @@ export async function executeGovernanceTool(name, args) {
       },
       outcome_prediction: prediction,
       recent_voters: votes.voters.slice(-10),
-      payment,
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  // --- governance_vote ---
-  if (name === "governance_vote") {
-    // HITL hard stop — if no approval_token, block and return approval URL
-    // If approval_token provided, verify it's approved before proceeding
-    if (!args.approval_token) {
-      const hitl = await enforceHITL("governance_vote", args.api_key, "2.0000");
-      if (!hitl.proceed) throw new Error(hitl.error);
-    } else {
-      const { checkApproval } = await import("../../hitl.js");
-      const check = checkApproval(args.approval_token);
-      if (!check.approved) {
-        throw new Error(
-          `Approval token "${args.approval_token}" is not yet approved. ` +
-          `A human operator must visit the approval URL first.`
-        );
-      }
-    }
-
-    const payment = chargeForTool("governance_vote", args.api_key);
-
-    const validVotes = ["yes", "no", "abstain"];
-    const vote = (args.vote || "").toLowerCase();
-    if (!validVotes.includes(vote)) {
-      throw new Error("Invalid vote value. Must be 'yes', 'no', or 'abstain'.");
-    }
-
-    // Import Hedera SDK for on-chain write
-    const { Client, AccountId, PrivateKey, TopicMessageSubmitTransaction } = await import("@hashgraph/sdk");
-
-    const network = process.env.HEDERA_NETWORK || "testnet";
-    const client = network === "mainnet" ? Client.forMainnet() : Client.forTestnet();
-    client.setOperator(
-      AccountId.fromString(process.env.HEDERA_ACCOUNT_ID),
-      PrivateKey.fromStringECDSA(process.env.HEDERA_PRIVATE_KEY)
-    );
-
-    const voteRecord = {
-      type: "vote",
-      proposal_id: args.proposal_id,
-      voter_id: args.voter_id,
-      vote: vote,
-      rationale: args.rationale || null,
-      cast_at: new Date().toISOString(),
-    };
-
-    const tx = await new TopicMessageSubmitTransaction()
-      .setTopicId(args.topic_id)
-      .setMessage(JSON.stringify(voteRecord))
-      .execute(client);
-
-    const receipt = await tx.getReceipt(client);
-
-    return {
-      success: true,
-      proposal_id: args.proposal_id,
-      topic_id: args.topic_id,
-      voter_id: args.voter_id,
-      vote: vote,
-      rationale: args.rationale || null,
-      transaction_id: tx.transactionId.toString(),
-      cast_at: voteRecord.cast_at,
-      note: "Your vote has been permanently recorded on the Hedera blockchain and cannot be altered.",
       payment,
       timestamp: new Date().toISOString(),
     };
