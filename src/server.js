@@ -12,7 +12,6 @@ import { BRIDGE_TOOL_DEFINITIONS, executeBridgeTool } from "./modules/bridge/too
 import { ACCOUNT_TOOL_DEFINITIONS, executeAccountTool } from "./modules/account/tools.js";
 import { LEGAL_TOOL_DEFINITIONS, executeLegalTool } from "./modules/legal/tools.js";
 import { checkConsent } from "./consent.js";
-import { checkHITL } from "./hitl.js";
 
 export const ALL_TOOLS = [
   // Legal / onboarding (always first — agents see these before any paid tool)
@@ -40,11 +39,6 @@ async function routeTool(name, args, req) {
   // ── Consent gate ─────────────────────────────────────────────────────────
   checkConsent(name, args);
 
-  // ── HITL gate ─────────────────────────────────────────────────────────────
-  const hitlResult = await checkHITL(name, args?.api_key, args);
-  // hitlResult is null (auto) or { tier: "NOTIFY_ONLY", approvalToken }
-  // HARD_STOP throws before reaching here
-
   // ── Execute tool ──────────────────────────────────────────────────────────
   let result;
   if (["hcs_monitor", "hcs_query", "hcs_understand"].includes(name)) {
@@ -65,15 +59,6 @@ async function routeTool(name, args, req) {
     result = await executeBridgeTool(name, args);
   } else {
     throw new Error(`Unknown tool: ${name}`);
-  }
-
-  // Attach HITL metadata to result if notify tier
-  if (hitlResult?.tier === "NOTIFY_ONLY") {
-    result._hitl = {
-      tier: "NOTIFY_ONLY",
-      approval_token: hitlResult.approvalToken,
-      note: "This transaction exceeded the notify threshold. A webhook notification has been sent.",
-    };
   }
 
   return result;
