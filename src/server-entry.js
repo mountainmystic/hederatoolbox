@@ -281,7 +281,7 @@ function getDashboardHTML() {
       <h2>Top Up</h2>
       <div class="card qr-wrap">
         <div class="account-id" id="qr-account">${platformAccount}</div>
-        <img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=hedera%3A${platformAccount}" alt="QR" width="180" height="180">
+        <img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${platformAccount}" alt="QR" width="180" height="180">
         <div class="sub">Send HBAR to this address to top up any account</div>
       </div>
     </div>
