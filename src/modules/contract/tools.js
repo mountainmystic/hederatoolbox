@@ -142,7 +142,8 @@ export const CONTRACT_TOOL_DEFINITIONS = [
         contract_id: { type: "string", description: "Hedera contract ID (e.g. 0.0.123456) or EVM address (0x...)" },
         function_name: { type: "string", description: "Contract function name to call (e.g. balanceOf, totalSupply, name)" },
         function_params: { type: "array", description: "Optional array of parameter values to pass to the function", items: { type: "string" } },
-        abi_hint: { type: "string", description: "Optional ABI hint - common values: ERC20, ERC721, HTS" },
+        abi_hint: { type: "string", description: "Optional full function signature for precise ABI encoding e.g. 'balanceOf(address)' or 'getReserves()'" },
+        return_types: { type: "array", description: "Optional ABI return types for precise decoding e.g. ['uint112','uint112','uint32'] for getReserves, ['address'] for owner", items: { type: "string" } },
         api_key: { type: "string", description: "Your HederaIntel API key" },
       },
       required: ["contract_id", "function_name", "api_key"],
@@ -287,7 +288,39 @@ export async function executeContractTool(name, args) {
     // Decode the result
     let decoded = null;
     if (callResult?.result && callResult.result !== "0x") {
-      decoded = decodeResult(callResult.result);
+      if (args.return_types && args.return_types.length > 0) {
+        // Precise decode using ethers ABI coder
+        try {
+          const raw = ethers.utils.defaultAbiCoder.decode(
+            args.return_types,
+            callResult.result
+          );
+          // Convert BigNumbers and format addresses with Hedera IDs
+          const values = args.return_types.map((type, i) => {
+            const val = raw[i];
+            if (ethers.BigNumber.isBigNumber(val)) {
+              return { type, value: val.toString() };
+            }
+            if (type === "address" || type.startsWith("address")) {
+              const addr = val.toLowerCase();
+              // Convert EVM address to Hedera ID (last 4 bytes as decimal)
+              const hederaNum = parseInt(addr.slice(-8), 16);
+              return { type, value: addr, hedera_id: `0.0.${hederaNum}` };
+            }
+            return { type, value: val.toString() };
+          });
+          decoded = {
+            raw_hex: callResult.result,
+            decoded_values: values,
+            note: `Decoded using provided return_types: [${args.return_types.join(", ")}]`,
+          };
+        } catch (e) {
+          // Fall back to heuristic decoder if ethers decode fails
+          decoded = { ...decodeResult(callResult.result), ethers_decode_error: e.message };
+        }
+      } else {
+        decoded = decodeResult(callResult.result);
+      }
     }
 
     // Recent call history
