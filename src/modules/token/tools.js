@@ -78,19 +78,6 @@ export const TOKEN_TOOL_DEFINITIONS = [
     },
   },
   {
-    name: "defi_yields",
-    description: "Discover current DeFi yield opportunities on Hedera including liquidity pools, staking, and lending rates. Costs 0.2 HBAR.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        token_id: { type: "string", description: "Optional token ID to filter yields for a specific token" },
-        min_apy: { type: "number", description: "Optional minimum APY percentage to filter results (e.g. 5 for 5%)" },
-        api_key: { type: "string", description: "Your HederaIntel API key" },
-      },
-      required: ["api_key"],
-    },
-  },
-  {
     name: "token_monitor",
     description: "Monitor recent token transfer activity, whale movements, and unusual trading patterns for a Hedera token. Costs 0.1 HBAR.",
     inputSchema: {
@@ -258,79 +245,6 @@ export async function executeTokenTool(name, args) {
       },
       created_timestamp: token.created_timestamp,
       memo: token.memo || null,
-      payment,
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  // --- defi_yields ---
-  if (name === "defi_yields") {
-    const payment = chargeForTool("defi_yields", args.api_key);
-    const minApy = args.min_apy || 0;
-
-    const pools = await getSaucerSwapPools();
-    const saucerTokens = await getSaucerSwapTokens();
-
-    // Build token lookup map
-    const tokenMap = {};
-    for (const t of saucerTokens) {
-      tokenMap[t.id] = t;
-    }
-
-    let yields = [];
-    for (const pool of pools) {
-      const apy = parseFloat(pool.feeApy || pool.apy || 0);
-      if (apy < minApy) continue;
-      if (args.token_id) {
-        const hasToken = pool.tokenA?.id === args.token_id || pool.tokenB?.id === args.token_id ||
-                         pool.token0?.id === args.token_id || pool.token1?.id === args.token_id;
-        if (!hasToken) continue;
-      }
-
-      const tokenAId = pool.tokenA?.id || pool.token0?.id;
-      const tokenBId = pool.tokenB?.id || pool.token1?.id;
-      const tokenASymbol = pool.tokenA?.symbol || tokenMap[tokenAId]?.symbol || tokenAId || "?";
-      const tokenBSymbol = pool.tokenB?.symbol || tokenMap[tokenBId]?.symbol || tokenBId || "?";
-
-      yields.push({
-        type: "Liquidity Pool",
-        protocol: "SaucerSwap",
-        pair: tokenASymbol + "/" + tokenBSymbol,
-        token_a_id: tokenAId,
-        token_b_id: tokenBId,
-        apy: apy.toFixed(2) + "%",
-        tvl_usd: pool.tvl ? "$" + parseFloat(pool.tvl).toLocaleString() : "unknown",
-        volume_24h_usd: pool.volume24h ? "$" + parseFloat(pool.volume24h).toLocaleString() : "unknown",
-        pool_id: pool.contractId || pool.id || null,
-      });
-    }
-
-    // Sort by APY descending, take top 20
-    yields.sort((a, b) => parseFloat(b.apy) - parseFloat(a.apy));
-    yields = yields.slice(0, 20);
-
-    // Always include native HBAR staking
-    const nativeStaking = {
-      type: "Native Staking",
-      protocol: "Hedera Network",
-      pair: "HBAR",
-      apy: "~2-3%",
-      tvl_usd: "N/A",
-      volume_24h_usd: "N/A",
-      description: "Stake HBAR directly to a Hedera node. No lockup, rewards compound automatically.",
-      risk: "LOW",
-    };
-
-    return {
-      token_filter: args.token_id || null,
-      min_apy_filter: minApy > 0 ? minApy + "%" : null,
-      total_opportunities: yields.length + 1,
-      native_staking: nativeStaking,
-      liquidity_pools: yields,
-      note: yields.length === 0
-        ? "No pools matched your filter criteria. Try removing the token_id or min_apy filter."
-        : `Showing top ${yields.length} pools by APY from SaucerSwap.`,
-      data_source: "SaucerSwap DEX API + Hedera native staking",
       payment,
       timestamp: new Date().toISOString(),
     };

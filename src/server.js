@@ -7,7 +7,6 @@ import { GOVERNANCE_TOOL_DEFINITIONS, executeGovernanceTool } from "./modules/go
 import { TOKEN_TOOL_DEFINITIONS, executeTokenTool } from "./modules/token/tools.js";
 import { IDENTITY_TOOL_DEFINITIONS, executeIdentityTool } from "./modules/identity/tools.js";
 import { CONTRACT_TOOL_DEFINITIONS, executeContractTool } from "./modules/contract/tools.js";
-import { NFT_TOOL_DEFINITIONS, executeNFTTool } from "./modules/nft/tools.js";
 import { ACCOUNT_TOOL_DEFINITIONS, executeAccountTool } from "./modules/account/tools.js";
 import { LEGAL_TOOL_DEFINITIONS, executeLegalTool } from "./modules/legal/tools.js";
 import { checkConsent } from "./consent.js";
@@ -23,7 +22,6 @@ export const ALL_TOOLS = [
   ...TOKEN_TOOL_DEFINITIONS,
   ...IDENTITY_TOOL_DEFINITIONS,
   ...CONTRACT_TOOL_DEFINITIONS,
-  ...NFT_TOOL_DEFINITIONS,
 ];
 
 // Tools that bypass consent + HITL entirely
@@ -45,14 +43,12 @@ async function routeTool(name, args, req) {
     result = await executeComplianceTool(name, args);
   } else if (["governance_monitor", "governance_analyze", "governance_vote"].includes(name)) {
     result = await executeGovernanceTool(name, args);
-  } else if (["token_price", "token_analyze", "defi_yields", "token_monitor"].includes(name)) {
+  } else if (["token_price", "token_analyze", "token_monitor"].includes(name)) {
     result = await executeTokenTool(name, args);
   } else if (["identity_resolve", "identity_verify_kyc", "identity_check_sanctions"].includes(name)) {
     result = await executeIdentityTool(name, args);
   } else if (["contract_read", "contract_call", "contract_analyze"].includes(name)) {
     result = await executeContractTool(name, args);
-  } else if (["nft_collection_info", "nft_token_metadata", "nft_collection_analyze", "token_holders"].includes(name)) {
-    result = await executeNFTTool(name, args);
   } else {
     throw new Error(`Unknown tool: ${name}`);
   }

@@ -1,5 +1,5 @@
 /**
- * tools.js — All 27 HederaIntel tool schemas (names + descriptions + inputSchemas only)
+ * tools.js — All 19 HederaIntel tool schemas (names + descriptions + inputSchemas only)
  *
  * This file ships inside the npm package. It contains ZERO Hedera SDK logic —
  * only the MCP tool definitions that tell AI agents what tools are available
@@ -269,31 +269,6 @@ export const TOOLS = [
     },
   },
 
-  {
-    name: "governance_vote",
-    description:
-      "Cast a governance vote on-chain via HCS, permanently recording your vote for a " +
-      "proposal. Costs 2 HBAR.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        api_key: { type: "string", description: "Your HederaIntel API key" },
-        topic_id: { type: "string", description: "HCS topic ID where votes are recorded" },
-        proposal_id: { type: "string", description: "The proposal ID you are voting on" },
-        voter_id: {
-          type: "string",
-          description: "Your Hedera account ID (e.g. 0.0.123456)",
-        },
-        vote: { type: "string", description: "Your vote: 'yes', 'no', or 'abstain'" },
-        rationale: {
-          type: "string",
-          description: "Optional short rationale for your vote",
-        },
-      },
-      required: ["api_key", "proposal_id", "topic_id", "vote", "voter_id"],
-    },
-  },
-
   // ─── Token ────────────────────────────────────────────────────────────────
 
   {
@@ -326,28 +301,6 @@ export const TOOLS = [
         },
       },
       required: ["api_key", "token_id"],
-    },
-  },
-
-  {
-    name: "defi_yields",
-    description:
-      "Discover current DeFi yield opportunities on Hedera including liquidity pools, " +
-      "staking, and lending rates. Costs 0.2 HBAR.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        api_key: { type: "string", description: "Your HederaIntel API key" },
-        token_id: {
-          type: "string",
-          description: "Optional token ID to filter yields for a specific token",
-        },
-        min_apy: {
-          type: "number",
-          description: "Optional minimum APY percentage to filter results (e.g. 5 for 5%)",
-        },
-      },
-      required: ["api_key"],
     },
   },
 
@@ -501,150 +454,4 @@ export const TOOLS = [
     },
   },
 
-  // ─── NFT ──────────────────────────────────────────────────────────────────
-
-  {
-    name: "nft_collection_info",
-    description:
-      "Get metadata and stats for an NFT collection on Hedera including supply, " +
-      "royalties, treasury, and token properties. Costs 0.1 HBAR.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        api_key: { type: "string", description: "Your HederaIntel API key" },
-        token_id: {
-          type: "string",
-          description: "Hedera token ID for the NFT collection (e.g. 0.0.123456)",
-        },
-      },
-      required: ["api_key", "token_id"],
-    },
-  },
-
-  {
-    name: "nft_token_metadata",
-    description:
-      "Get metadata for a specific NFT serial number including on-chain data, " +
-      "IPFS/metadata URI, and current owner. Costs 0.1 HBAR.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        api_key: { type: "string", description: "Your HederaIntel API key" },
-        token_id: {
-          type: "string",
-          description: "Hedera token ID for the NFT collection (e.g. 0.0.123456)",
-        },
-        serial_number: {
-          type: "number",
-          description: "Serial number of the specific NFT to look up",
-        },
-      },
-      required: ["api_key", "token_id", "serial_number"],
-    },
-  },
-
-  {
-    name: "nft_collection_analyze",
-    description:
-      "Deep analysis of an NFT collection including holder distribution, whale " +
-      "concentration, transfer velocity, floor price signals, and rarity insights. " +
-      "Costs 0.3 HBAR.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        api_key: { type: "string", description: "Your HederaIntel API key" },
-        token_id: {
-          type: "string",
-          description: "Hedera token ID for the NFT collection to analyze",
-        },
-      },
-      required: ["api_key", "token_id"],
-    },
-  },
-
-  {
-    name: "token_holders",
-    description:
-      "Get the holder distribution for any Hedera token (fungible or NFT) including " +
-      "top holders, concentration metrics, and whale analysis. Costs 0.2 HBAR.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        api_key: { type: "string", description: "Your HederaIntel API key" },
-        token_id: {
-          type: "string",
-          description: "Hedera token ID to get holder distribution for",
-        },
-        limit: {
-          type: "number",
-          description: "Number of top holders to return (default 25, max 100)",
-        },
-      },
-      required: ["api_key", "token_id"],
-    },
-  },
-
-  // ─── Bridge ───────────────────────────────────────────────────────────────
-
-  {
-    name: "bridge_status",
-    description:
-      "Get the current status of Hedera bridge infrastructure including known bridge " +
-      "contracts, wrapped token registry, and bridge health indicators. Costs 0.1 HBAR.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        api_key: { type: "string", description: "Your HederaIntel API key" },
-        bridge_id: {
-          type: "string",
-          description:
-            "Optional specific bridge contract ID or token ID to check status for",
-        },
-      },
-      required: ["api_key"],
-    },
-  },
-
-  {
-    name: "bridge_transfers",
-    description:
-      "Monitor recent bridge transfer activity for a specific bridged token or bridge " +
-      "contract on Hedera. Returns transfer volume, frequency, and counterparty analysis. " +
-      "Costs 0.2 HBAR.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        api_key: { type: "string", description: "Your HederaIntel API key" },
-        token_id: {
-          type: "string",
-          description:
-            "Hedera token ID of a bridged asset to monitor (e.g. USDC, WETH)",
-        },
-        limit: {
-          type: "number",
-          description: "Number of recent transfers to analyze (default 50, max 100)",
-        },
-      },
-      required: ["api_key", "token_id"],
-    },
-  },
-
-  {
-    name: "bridge_analyze",
-    description:
-      "Deep analysis of cross-network bridge activity for a token including peg " +
-      "stability, mint/burn ratio, custodian concentration, and bridge risk assessment. " +
-      "Costs 0.5 HBAR.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        api_key: { type: "string", description: "Your HederaIntel API key" },
-        token_id: {
-          type: "string",
-          description: "Hedera token ID of a bridged asset to analyze",
-        },
-      },
-      required: ["api_key", "token_id"],
-    },
-  },
 ];

@@ -4,7 +4,7 @@
   "service": {
     "name": "HederaIntel MCP Platform",
     "provider": "mountainmystic",
-    "version": "2.8.0",
+    "version": "2.9.0",
     "terms_version": "1.0.0",
     "effective_date": "2026-03-01",
     "jurisdiction": "British Columbia, Canada",
@@ -44,19 +44,14 @@
           { "name": "token_monitor",      "hbar": "0.1000" },
           { "name": "identity_resolve",   "hbar": "0.1000" },
           { "name": "contract_read",      "hbar": "0.1000" },
-          { "name": "nft_collection_info","hbar": "0.1000" },
-          { "name": "nft_token_metadata", "hbar": "0.1000" }
         ]
       },
       "standard": {
         "usd_equivalent": "~$0.02–$0.05",
         "hbar_cost": "0.20 – 0.50",
         "tools": [
-          { "name": "defi_yields",              "hbar": "0.2000" },
-          { "name": "token_holders",            "hbar": "0.2000" },
           { "name": "identity_verify_kyc",      "hbar": "0.2000" },
           { "name": "token_analyze",            "hbar": "0.3000" },
-          { "name": "nft_collection_analyze",   "hbar": "0.3000" },
           { "name": "hcs_understand",           "hbar": "0.5000" },
           { "name": "hcs_verify_record",        "hbar": "0.5000" },
           { "name": "identity_check_sanctions", "hbar": "0.5000" },

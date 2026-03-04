@@ -11,11 +11,12 @@ export const ACCOUNT_TOOL_DEFINITIONS = [
   {
     name: "account_info",
     description:
-      "Get platform wallet address, pricing for all 24 tools in HBAR and USD, and your current balance. " +
+      "Get platform wallet address, pricing for all 19 tools in HBAR and USD, and your current balance. " +
       "FREE to call — no API key required. " +
       "Use this tool first to discover how to fund an account and start using the platform. " +
       "To create an account automatically, simply send HBAR to the platform wallet — " +
-      "your Hedera account ID becomes your API key automatically.",
+      "your Hedera account ID becomes your API key automatically. " +
+      "19 tools across 6 modules.",
     inputSchema: {
       type: "object",
       properties: {

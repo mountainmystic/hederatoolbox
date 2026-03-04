@@ -15,10 +15,9 @@ export const COSTS = {
   // Module 3 - Governance Intelligence
   governance_monitor:       { tinybars: 10000000,  hbar: "0.1000" },
   governance_analyze:       { tinybars: 50000000,  hbar: "0.5000" },
-  // Module 4 - Token & DeFi Intelligence
+  // Module 4 - Token Intelligence
   token_price:              { tinybars: 5000000,   hbar: "0.0500" },
   token_analyze:            { tinybars: 30000000,  hbar: "0.3000" },
-  defi_yields:              { tinybars: 20000000,  hbar: "0.2000" },
   token_monitor:            { tinybars: 10000000,  hbar: "0.1000" },
   // Module 5 - Verified Identity Resolution
   identity_resolve:         { tinybars: 10000000,  hbar: "0.1000" },
@@ -28,11 +27,6 @@ export const COSTS = {
   contract_read:            { tinybars: 10000000,  hbar: "0.1000" },
   contract_call:            { tinybars: 50000000,  hbar: "0.5000" },
   contract_analyze:         { tinybars: 100000000, hbar: "1.0000" },
-  // Module 7 - NFT & Token Metadata
-  nft_collection_info:      { tinybars: 10000000,  hbar: "0.1000" },
-  nft_token_metadata:       { tinybars: 10000000,  hbar: "0.1000" },
-  nft_collection_analyze:   { tinybars: 30000000,  hbar: "0.3000" },
-  token_holders:            { tinybars: 20000000,  hbar: "0.2000" },
 };
 
 // Called by every tool before executing. Deducts cost from the account's

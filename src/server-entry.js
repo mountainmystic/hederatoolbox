@@ -56,7 +56,7 @@ const httpServer = http.createServer(async (req, res) => {
       version: VERSION,
       network: process.env.HEDERA_NETWORK,
       account: process.env.HEDERA_ACCOUNT_ID,
-      modules: ["hcs", "compliance", "governance", "token", "identity", "contract", "nft", "bridge"],
+      modules: ["hcs", "compliance", "governance", "token", "identity", "contract"],
       tools: ALL_TOOLS.map((t) => t.name),
       costs: getCosts(),
       mcp_endpoint: "/mcp",

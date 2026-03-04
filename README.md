@@ -2,7 +2,7 @@
 
 > The intelligence layer for AI agents on Hedera.
 
-**24 tools. 8 modules. Pay per call in HBAR. No registration.**
+**19 tools. 6 modules. Pay per call in HBAR. No registration.**
 
 HederaIntel is a production [Model Context Protocol](https://modelcontextprotocol.io) server. It gives AI agents structured, metered access to the full Hedera ecosystem — HCS topics, tokens, DeFi, identity, smart contracts, NFTs, governance, and compliance.
 
@@ -45,7 +45,7 @@ HederaIntel uses **agent-native HBAR payments**. No accounts, no OAuth, no email
 5. call any tool    -> pass your Hedera account ID as api_key
 ```
 
-**Platform wallet:** `0.0.10298356` (mainnet)
+**Platform wallet:** `0.0.10309126` (mainnet)
 
 Credits are persistent. Unused balance carries over indefinitely.
 
@@ -111,13 +111,12 @@ Terms of Service: `get_terms` tool or [/public/terms.json](https://hedera-mcp-pl
 
 ---
 
-### Module 4 — Token and DeFi Intelligence
+### Module 4 — Token Intelligence
 
 | Tool | Cost | Description |
 |------|------|-------------|
 | `token_price` | 0.05 HBAR | Spot price, 1h/24h/7d change, liquidity — via SaucerSwap |
 | `token_monitor` | 0.10 HBAR | Recent transfers, whale movements, unusual patterns |
-| `defi_yields` | 0.20 HBAR | Live yield opportunities: pools, staking, lending |
 | `token_analyze` | 0.30 HBAR | Holder distribution, velocity, concentration, risk score |
 
 ---
@@ -144,14 +143,6 @@ Accepts both Hedera native IDs (`0.0.123456`) and EVM addresses (`0x...`).
 
 ---
 
-### Module 7 — NFT and Holder Intelligence
-
-| Tool | Cost | Description |
-|------|------|-------------|
-| `nft_collection_info` | 0.10 HBAR | Supply, royalties, treasury, token properties |
-| `nft_token_metadata` | 0.10 HBAR | Serial-level data: IPFS metadata, current owner |
-| `token_holders` | 0.20 HBAR | Top holders, concentration metrics, whale analysis |
-| `nft_collection_analyze` | 0.30 HBAR | Whale concentration, transfer velocity, rarity signals |
 
 ---
 
@@ -180,13 +171,13 @@ The npm package contains no business logic — only tool schemas and a proxy. In
 
 ---
 
-## What's New in v2.8.0
+## What's New in v2.9.0
 
-- **Leaner tool set** — removed `governance_vote` and the entire bridge module; 24 focused tools across 8 modules
+- **Leaner tool set** — removed `defi_yields` and entire NFT module; 19 focused tools across 6 modules
+- **New operator wallet** — platform wallet updated to `0.0.10309126`
 - **`contract_call` return type decoding** — pass `return_types` for precise ABI decoding of tuples, arrays, and multi-value returns
 - **EVM address support** — all identity and contract tools accept `0x...` addresses directly
 - **Live HBAR/USD pricing** — `account_info` shows real-time USD cost for every tool
-- **`@hederaintel/platform`** — npm namespace (migrated from `hedera-mcp-platform`)
 
 ---
 
