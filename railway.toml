@@ -7,3 +7,7 @@ nixPkgs = ["nodejs_22"]
 [deploy]
 startCommand = "node --experimental-sqlite src/server-entry.js"
 restartPolicyType = "always"
+
+[cron.backup]
+schedule = "0 2 * * *"
+command = "node scripts/backup.mjs"
