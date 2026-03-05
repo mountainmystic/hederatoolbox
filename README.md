@@ -64,8 +64,6 @@ HITL is enforced on **operation type**, not balance size. HederaIntel is a read 
 | Same tool >20 calls in 60s | Loop guard | Blocked — agent must wait 60s |
 | All other tools | Auto | Executes immediately |
 
-Full architecture: [SECURITY.md](SECURITY.md) — written for AI agents to read.
-
 Terms of Service: `get_terms` tool or [/public/terms.json](https://hedera-mcp-platform-production.up.railway.app/public/terms.json)
 
 ---
@@ -143,34 +141,6 @@ Accepts both Hedera native IDs (`0.0.123456`) and EVM addresses (`0x...`).
 
 ---
 
-
----
-
-
-## Architecture
-
-```
-AI Agent
-    | MCP (stdio or Streamable HTTP)
-    v
-@hederaintel/platform (npm, ~15 KB)
-    | tool schemas + HTTPS proxy — zero business logic
-    v HTTPS
-HederaIntel Remote Brain (Railway, proprietary)
-    |-- consent gate
-    |-- HITL enforcement
-    |-- HBAR payment processing
-    |-- SaucerSwap API (live token prices)
-    |-- Hedera mirror node
-    |-- SQLite (balances, consent log, HITL events)
-    v
-Hedera Mainnet
-```
-
-The npm package contains no business logic — only tool schemas and a proxy. Intelligence, payments, and safety enforcement live in the private remote server and are never published to npm.
-
----
-
 ## What's New in v2.9.0
 
 - **Leaner tool set** — removed `defi_yields` and entire NFT module; 20 focused tools across 6 modules
@@ -195,14 +165,13 @@ The npm package contains no business logic — only tool schemas and a proxy. In
 | MCP Registry | https://registry.modelcontextprotocol.io — search `hederaintel` |
 | Live endpoint | https://hedera-mcp-platform-production.up.railway.app/mcp |
 | Terms | https://hedera-mcp-platform-production.up.railway.app/terms |
-| Health | https://hedera-mcp-platform-production.up.railway.app/health |
 
 ---
 
 ## License
 
-**npm package** (`src/index.js`, `src/tools.js`, `src/proxy.js`) — provided for integration use.
+**npm package** — provided for integration use only.
 
-**Remote server** (`src/modules/`, `src/server.js`, `src/payments.js`, and all backend logic) — Proprietary. See [LICENSE.md](LICENSE.md).
+**Remote server and all backend logic** — Proprietary. See [LICENSE.md](LICENSE.md).
 
 Enterprise licensing and SLA inquiries: open an issue titled `[Enterprise]`.
