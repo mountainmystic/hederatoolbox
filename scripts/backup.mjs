@@ -2,6 +2,7 @@
 // Fetches the live DB via /admin/backup then commits to GitHub.
 import https from "https";
 import http from "http";
+import { lookup } from "dns";
 
 console.log("=== HederaIntel Backup Script Starting ===");
 console.log("Time:", new Date().toISOString());
@@ -27,6 +28,15 @@ const TODAY           = new Date().toISOString().slice(0, 10);
 const BACKUP_FILENAME = `backups/hederaintel-${TODAY}.db`;
 
 console.log("Platform URL:", PLATFORM_URL);
+
+// Quick DNS check
+await new Promise(resolve => {
+  lookup("hedera-mcp-platform.railway.internal", (err, address) => {
+    if (err) console.error("DNS lookup failed:", err.message);
+    else console.log("DNS resolved to:", address);
+    resolve();
+  });
+});
 console.log("GitHub Repo:", GITHUB_REPO);
 console.log("Backup filename:", BACKUP_FILENAME);
 
