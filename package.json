@@ -1,6 +1,6 @@
 {
   "name": "@hederaintel/platform",
-  "version": "2.9.0",
+  "version": "2.9.1",
   "mcpName": "io.github.mountainmystic/hederaintel",
   "description": "Hedera blockchain intelligence for AI agents. 20 tools across 6 modules — HCS, compliance, governance, tokens, identity, contracts. Pay per call in HBAR. No registration required.",
   "main": "src/index.js",
