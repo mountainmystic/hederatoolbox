@@ -23,20 +23,30 @@ const GITHUB_TOKEN    = process.env.GITHUB_BACKUP_TOKEN;
 const GITHUB_REPO     = process.env.GITHUB_BACKUP_REPO;
 // Use Railway private domain for inter-service calls
 // We reference the main service's private domain via a variable we set manually
-const PLATFORM_URL    = `http://${process.env.MAIN_SERVICE_PRIVATE_DOMAIN}`;
+// URL built after DNS resolution below
+let PLATFORM_URL = `http://${process.env.MAIN_SERVICE_PRIVATE_DOMAIN}`;
 const TODAY           = new Date().toISOString().slice(0, 10);
 const BACKUP_FILENAME = `backups/hederaintel-${TODAY}.db`;
 
 console.log("Platform URL:", PLATFORM_URL);
 
-// Quick DNS check
-await new Promise(resolve => {
-  lookup("hedera-mcp-platform.railway.internal", (err, address) => {
-    if (err) console.error("DNS lookup failed:", err.message);
-    else console.log("DNS resolved to:", address);
-    resolve();
+// DNS lookup — resolve private hostname to IP
+const PRIVATE_IP = await new Promise(resolve => {
+  lookup("hedera-mcp-platform.railway.internal", { family: 6 }, (err, address) => {
+    if (err) {
+      console.error("DNS lookup failed:", err.message);
+      resolve(null);
+    } else {
+      console.log("DNS resolved to:", address);
+      resolve(address);
+    }
   });
 });
+
+if (!PRIVATE_IP) {
+  console.error("❌ Could not resolve private hostname");
+  process.exit(1);
+}
 console.log("GitHub Repo:", GITHUB_REPO);
 console.log("Backup filename:", BACKUP_FILENAME);
 
@@ -45,9 +55,11 @@ console.log("Backup filename:", BACKUP_FILENAME);
 // ─────────────────────────────────────────────
 
 async function fetchBackup() {
-  console.log(`\nStep 1: Fetching backup from ${PLATFORM_URL}/admin/backup ...`);
+  // Use IPv6 address directly with brackets for Node.js http
+  const fetchURL = `http://[${PRIVATE_IP}]/admin/backup`;
+  console.log(`\nStep 1: Fetching backup from ${fetchURL} ...`);
   return new Promise((resolve, reject) => {
-    const req = http.request(`${PLATFORM_URL}/admin/backup`, {
+    const req = http.request(fetchURL, {
       headers: { "x-admin-secret": ADMIN_SECRET },
       timeout: 30000,
     }, (res) => {
