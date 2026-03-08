@@ -12,6 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TERMS = JSON.parse(readFileSync(path.join(__dirname, "../legal/terms.json"), "utf-8"));
 const { version: VERSION } = JSON.parse(readFileSync(path.join(__dirname, "../package.json"), "utf-8"));
 import { startWatcher } from "./watcher.js";
+import { handleTelegramUpdate, registerWebhook } from "./telegram.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import http from "http";
 
@@ -128,6 +129,20 @@ const httpServer = http.createServer(async (req, res) => {
       amount_hbar: event.amount_hbar,
       approved_at: new Date().toISOString(),
     });
+  }
+
+  // Telegram webhook — Telegram POSTs incoming messages here
+  if (req.method === "POST" && url.pathname === "/telegram/webhook") {
+    try {
+      const body = JSON.parse(await readBody(req));
+      handleTelegramUpdate(body).catch(e => console.error("[Telegram] Update error:", e.message));
+    } catch (e) {
+      console.error("[Telegram] Webhook parse error:", e.message);
+    }
+    // Always respond 200 immediately — Telegram will retry if we don't
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end('{"ok":true}');
+    return;
   }
 
   if (url.pathname === "/mcp") {
@@ -445,6 +460,7 @@ httpServer.listen(port, () => {
 });
 
 startWatcher();
+registerWebhook();
 console.error("Hedera network: " + process.env.HEDERA_NETWORK);
 console.error("Tools: " + ALL_TOOLS.map((t) => t.name).join(", "));
 

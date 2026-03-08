@@ -6,6 +6,7 @@
 
 import axios from "axios";
 import { creditAccount, depositAlreadyProcessed, recordDeposit } from "./db.js";
+import { notifyDeposit } from "./telegram.js";
 
 const PLATFORM_ACCOUNT = process.env.HEDERA_ACCOUNT_ID;   // e.g. 0.0.10298356
 const NETWORK          = process.env.HEDERA_NETWORK || "mainnet";
@@ -94,6 +95,14 @@ async function pollDeposits() {
         `[Watcher] Deposit: ${senderAccountId} sent ${depositHbar} HBAR → ` +
         `balance now ${balanceHbar} HBAR (tx: ${tx.transaction_id})`
       );
+
+      // Notify owner via Telegram
+      notifyDeposit({
+        accountId:   senderAccountId,
+        depositHbar,
+        balanceHbar,
+        txId:        tx.transaction_id,
+      }).catch(() => {}); // never let a Telegram failure crash the watcher
     }
 
     // Advance our cursor so next poll only fetches newer transactions
