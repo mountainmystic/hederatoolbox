@@ -233,7 +233,8 @@ const httpServer = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && url.pathname === "/admin/dashboard") {
-    if (!isAdmin(req)) return json(res, 401, { error: "Unauthorized" });
+    // Serve HTML unconditionally — the page JS prompts for the secret
+    // and sends it as x-admin-secret header on all subsequent API calls.
     res.writeHead(200, { "Content-Type": "text/html" });
     res.end(getDashboardHTML());
     return;
@@ -263,7 +264,7 @@ const httpServer = http.createServer(async (req, res) => {
 
 function getDashboardHTML() {
   const platformAccount = process.env.HEDERA_ACCOUNT_ID || "";
-  // Note: secret is NOT embedded in HTML — dashboard uses cookie set at login
+  // Note: secret is NOT embedded in HTML — dashboard uses prompt set at login
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -395,7 +396,6 @@ async function load() {
       fetchJSON('/admin/transactions'),
     ]);
 
-    // Summary cards
     document.getElementById('total-calls').textContent = stats.summary.total_calls.toLocaleString();
     document.getElementById('total-accounts').textContent = stats.summary.total_accounts.toLocaleString();
     document.getElementById('total-deposited').textContent = stats.summary.total_deposited_hbar + ' ℏ';
@@ -403,7 +403,6 @@ async function load() {
     document.getElementById('watcher-account').textContent = stats.watcher.platform_account + ' · ' + stats.watcher.network;
     document.getElementById('network-badge').textContent = stats.watcher.network;
 
-    // Tool ranking
     const maxCalls = stats.tool_ranking[0]?.calls || 1;
     document.getElementById('tool-ranking').innerHTML = stats.tool_ranking.length === 0
       ? '<tr><td colspan="5" style="color:#444">No calls yet</td></tr>'
@@ -416,7 +415,6 @@ async function load() {
           <td><div class="bar-wrap"><div class="bar" style="width:\${Math.round((t.calls/maxCalls)*100)}%"></div></div></td>
         </tr>\`).join('');
 
-    // Recent transactions
     document.getElementById('recent-txs').innerHTML = txs.transactions.length === 0
       ? '<tr><td colspan="4" style="color:#444">No transactions yet</td></tr>'
       : txs.transactions.slice(0, 20).map(t => \`
@@ -427,7 +425,6 @@ async function load() {
           <td style="color:#4ade80">\${(t.amount_tinybars/100000000).toFixed(4)}</td>
         </tr>\`).join('');
 
-    // Accounts
     document.getElementById('accounts-table').innerHTML = accounts.accounts.length === 0
       ? '<tr><td colspan="3" style="color:#444">No accounts yet</td></tr>'
       : accounts.accounts.map(a => \`
@@ -478,11 +475,9 @@ if (process.env.GITHUB_BACKUP_TOKEN && process.env.GITHUB_BACKUP_REPO) {
       console.error(`[Backup] Starting nightly backup to ${repo}/${filename}`);
 
       try {
-        // Read DB file
         const dbFile = readFileSync(dbPath);
         console.error(`[Backup] Read ${(dbFile.length / 1024).toFixed(1)} KB`);
 
-        // Check for existing SHA
         const sha = await new Promise(resolve => {
           const req = https.request({
             hostname: "api.github.com",
@@ -497,7 +492,6 @@ if (process.env.GITHUB_BACKUP_TOKEN && process.env.GITHUB_BACKUP_REPO) {
           req.end();
         });
 
-        // Commit to GitHub
         const body = JSON.stringify({
           message: `chore: nightly backup ${today}`,
           content: dbFile.toString("base64"),
@@ -538,7 +532,6 @@ if (process.env.GITHUB_BACKUP_TOKEN && process.env.GITHUB_BACKUP_REPO) {
       }
     }
 
-    // Schedule: run once at startup if past 2am, then every 24h
     function scheduleBackup() {
       const now = new Date();
       const next2am = new Date();
