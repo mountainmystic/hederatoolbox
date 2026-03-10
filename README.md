@@ -165,6 +165,10 @@ Accepts both Hedera native IDs (`0.0.123456`) and EVM addresses (`0x...`).
 
 ---
 
+## What's New in v3.2.0
+
+- **Custom domain** — MCP endpoint is now `https://api.hederatoolbox.com/mcp` (permanent, Railway-independent)
+
 ## What's New in v3.1.0
 
 - **Atomic balance deduction** — balance check and deduct now a single SQL operation, safe under any concurrency

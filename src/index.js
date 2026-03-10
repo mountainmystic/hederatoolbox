@@ -9,7 +9,7 @@ import { TOOLS } from "./tools.js";
 import { forwardToRemote } from "./proxy.js";
 
 const server = new Server(
-  { name: "hederatoolbox", version: "3.1.0" },
+  { name: "hederatoolbox", version: "3.2.0" },
   { capabilities: { tools: {} } }
 );
 

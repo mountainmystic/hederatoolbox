@@ -2,7 +2,7 @@
 
 > This document is the authoritative, versioned record of what HederaToolbox can and cannot do.
 > It is written for AI agents, developers, and enterprise evaluators.
-> Version: 3.1.0 | Updated: 2026-03-10
+> Version: 3.2.0 | Updated: 2026-03-10
 
 ---
 
@@ -14,7 +14,7 @@ It allows AI agents to query, analyze, and write compliance records to Hedera. I
 
 ---
 
-## Confirmed Capabilities (v3.1.0)
+## Confirmed Capabilities (v3.2.0)
 
 ### Payments and Onboarding
 - Accept HBAR deposits to a platform wallet and auto-provision API keys
@@ -57,7 +57,7 @@ It allows AI agents to query, analyze, and write compliance records to Hedera. I
 
 ---
 
-## Confirmed Limitations (v3.1.0)
+## Confirmed Limitations (v3.2.0)
 
 | Area | Limitation |
 |---|---|
@@ -113,3 +113,4 @@ The following features have been described by AI systems evaluating this repo. T
 | 2.9.0 | SQLite persistence, deposit watcher, `account_info` free onboarding entrypoint |
 | 3.0.0 | Rebranded to HederaToolbox, custom domain `api.hederatoolbox.com` |
 | 3.1.0 | Atomic balance deduction, HCS message sanitisation, robust JSON parsing, ghost deposit fix |
+| 3.2.0 | Custom domain `api.hederatoolbox.com` — permanent endpoint independent of Railway URL |
