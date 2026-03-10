@@ -458,6 +458,65 @@ httpServer.listen(port, () => {
 
 startWatcher();
 registerWebhook();
+
+// ── Automatic daily digest at 08:00 UTC ───────────────────────────────────
+// Sends a morning summary to the owner so you wake up knowing how the
+// platform performed overnight without having to check anything manually.
+import { notifyOwner } from "./telegram.js";
+
+function scheduleDailyDigest() {
+  const now = new Date();
+  const next8am = new Date();
+  next8am.setUTCHours(8, 0, 0, 0);
+  if (next8am <= now) next8am.setUTCDate(next8am.getUTCDate() + 1);
+  const msUntil = next8am - now;
+  console.error(`[Digest] First digest in ${Math.round(msUntil / 3600000)}h (08:00 UTC daily)`);
+
+  async function sendDigest() {
+    try {
+      const allTxs = getRecentTransactions(1000);
+      const since  = new Date(Date.now() - 86_400_000).toISOString().slice(0, 19);
+      const recent = allTxs.filter(t => t.timestamp >= since);
+      const earned = recent.reduce((s, t) => s + t.amount_tinybars, 0) / 100_000_000;
+      const activeAccounts = new Set(recent.map(t => t.api_key)).size;
+      const toolCounts = {};
+      for (const t of recent) toolCounts[t.tool_name] = (toolCounts[t.tool_name] || 0) + 1;
+      const topTools = Object.entries(toolCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name, count]) => `  ${name}: ${count}`)
+        .join("\n") || "  none";
+      const allAccounts = getAllAccounts();
+      const totalHeld = allAccounts.reduce((s, a) => s + a.balance_tinybars, 0) / 100_000_000;
+
+      await notifyOwner(
+        `🌅 <b>Morning digest</b>\n\n` +
+        `<b>Last 24h</b>\n` +
+        `Tool calls: <b>${recent.length}</b>\n` +
+        `HBAR earned: <b>${earned.toFixed(4)} ℏ</b>\n` +
+        `Active accounts: <b>${activeAccounts}</b>\n\n` +
+        `<b>Top tools:</b>\n${topTools}\n\n` +
+        `<b>Platform total</b>\n` +
+        `Accounts: <b>${allAccounts.length}</b>\n` +
+        `HBAR held: <b>${totalHeld.toFixed(4)} ℏ</b>`
+      );
+      console.error("[Digest] Daily digest sent");
+    } catch (e) {
+      console.error(`[Digest] Failed: ${e.message}`);
+    }
+  }
+
+  setTimeout(() => {
+    sendDigest();
+    setInterval(sendDigest, 24 * 60 * 60 * 1000);
+  }, msUntil);
+}
+
+if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_OWNER_ID) {
+  scheduleDailyDigest();
+} else {
+  console.error("[Digest] Telegram not configured — daily digest disabled");
+}
 console.error("Hedera network: " + process.env.HEDERA_NETWORK);
 console.error("Tools: " + ALL_TOOLS.map((t) => t.name).join(", "));
 

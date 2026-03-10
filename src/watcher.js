@@ -6,7 +6,7 @@
 
 import axios from "axios";
 import { creditAccount, depositAlreadyProcessed, recordDeposit } from "./db.js";
-import { notifyDeposit } from "./telegram.js";
+import { notifyDeposit, notifyWatcherError } from "./telegram.js";
 
 const PLATFORM_ACCOUNT = process.env.HEDERA_ACCOUNT_ID;   // e.g. 0.0.10298356
 const NETWORK          = process.env.HEDERA_NETWORK || "mainnet";
@@ -19,6 +19,10 @@ const MIRROR_BASE = NETWORK === "mainnet"
 // We track the timestamp of the last transaction we processed so we only
 // fetch genuinely new transactions on each poll.
 let lastTimestamp = null;
+
+// Consecutive poll failure counter — alert the owner after 3 in a row
+let consecutiveFailures = 0;
+const FAILURE_ALERT_THRESHOLD = 3;
 
 // ─────────────────────────────────────────────
 // Core poll function
@@ -121,10 +125,20 @@ async function pollDeposits() {
       lastTimestamp = newLastTimestamp;
     }
 
+    // Successful poll — reset failure counter
+    consecutiveFailures = 0;
+
   } catch (err) {
     // Log but never crash — the watcher must keep running even if the mirror
     // node is temporarily unavailable
     console.error(`[Watcher] Poll error: ${err.message}`);
+    consecutiveFailures++;
+    if (consecutiveFailures === FAILURE_ALERT_THRESHOLD) {
+      notifyWatcherError(
+        `Mirror node poll has failed ${consecutiveFailures} times in a row.\n` +
+        `Last error: ${err.message}`
+      ).catch(() => {});
+    }
   }
 }
 

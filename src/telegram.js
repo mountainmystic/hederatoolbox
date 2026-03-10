@@ -60,10 +60,16 @@ export async function notifyDeposit({ accountId, depositHbar, balanceHbar, txId,
   const msg =
     `💰 <b>New deposit</b>\n\n` +
     `Account: <code>${accountId}</code>\n` +
-    `Amount:  <b>${depositHbar} ℏ</b>${usdValue ? ` (~$${usdValue})` : ""}\n` +
+    `Amount:  <b>${depositHbar} ℏ</b>${usdValue ? ` (~${usdValue})` : ""}\n` +
     `Balance: ${balanceHbar} ℏ\n` +
     `TX: <code>${txId}</code>`;
   return notifyOwner(msg);
+}
+
+// Called by watcher.js when repeated poll failures occur
+export async function notifyWatcherError(message) {
+  if (!BOT_TOKEN || !OWNER_ID) return;
+  return notifyOwner(`⚠️ <b>Watcher error</b>\n\n${message}`);
 }
 
 // ─── System prompt for the assistant ─────────────────────────────────────────
@@ -214,8 +220,114 @@ export async function handleTelegramUpdate(update) {
       `• How authentication works\n` +
       `• Which tools to use for your use case\n` +
       `• Pricing and deposits\n\n` +
+      `<b>Owner commands:</b>\n` +
+      `/status — platform health snapshot\n` +
+      `/accounts — top 10 accounts by balance\n` +
+      `/balance &lt;account_id&gt; — look up any account\n` +
+      `/digest — today's activity summary\n\n` +
       `Or just ask in plain English.`
     );
+  }
+
+  // ── Owner-only commands ───────────────────────────────────────────────────
+  // Guard: only the owner can run these
+  const isOwner = String(userId) === String(OWNER_ID);
+
+  // /status — platform health snapshot
+  if (text === "/status") {
+    if (!isOwner) return sendMessage(chatId, "⛔ Owner only.");
+    try {
+      const { getAllAccounts, getRecentTransactions } = await import("./db.js");
+      const accounts = getAllAccounts();
+      const txs      = getRecentTransactions(500);
+      const totalHbar = accounts.reduce((s, a) => s + a.balance_tinybars, 0) / 100_000_000;
+      const last = txs[0]?.timestamp || "none";
+      const lastDeposit = accounts
+        .filter(a => a.last_used)
+        .sort((a, b) => (b.last_used > a.last_used ? 1 : -1))[0]?.last_used || "none";
+      return sendMessage(chatId,
+        `📊 <b>Platform status</b>\n\n` +
+        `Accounts: <b>${accounts.length}</b>\n` +
+        `Total HBAR held: <b>${totalHbar.toFixed(4)} ℏ</b>\n` +
+        `Tool calls (all time): <b>${txs.length}</b>\n` +
+        `Last tool call: <code>${last}</code>\n` +
+        `Last account activity: <code>${lastDeposit}</code>`
+      );
+    } catch (e) {
+      return sendMessage(chatId, `❌ Status error: ${e.message}`);
+    }
+  }
+
+  // /accounts — top 10 by balance
+  if (text === "/accounts") {
+    if (!isOwner) return sendMessage(chatId, "⛔ Owner only.");
+    try {
+      const { getAllAccounts } = await import("./db.js");
+      const accounts = getAllAccounts()
+        .sort((a, b) => b.balance_tinybars - a.balance_tinybars)
+        .slice(0, 10);
+      if (accounts.length === 0) return sendMessage(chatId, "No accounts yet.");
+      const lines = accounts.map((a, i) => {
+        const hbar = (a.balance_tinybars / 100_000_000).toFixed(4);
+        return `${i + 1}. <code>${a.api_key}</code> — <b>${hbar} ℏ</b>`;
+      }).join("\n");
+      return sendMessage(chatId, `🏆 <b>Top accounts by balance</b>\n\n${lines}`);
+    } catch (e) {
+      return sendMessage(chatId, `❌ Error: ${e.message}`);
+    }
+  }
+
+  // /balance <account_id>
+  if (text.startsWith("/balance")) {
+    if (!isOwner) return sendMessage(chatId, "⛔ Owner only.");
+    const accountId = text.split(" ")[1]?.trim();
+    if (!accountId) return sendMessage(chatId, "Usage: /balance 0.0.123456");
+    try {
+      const { getAccount } = await import("./db.js");
+      const account = getAccount(accountId);
+      if (!account) return sendMessage(chatId, `❌ Account <code>${accountId}</code> not found.`);
+      const hbar = (account.balance_tinybars / 100_000_000).toFixed(4);
+      return sendMessage(chatId,
+        `💳 <b>Account lookup</b>\n\n` +
+        `ID: <code>${account.api_key}</code>\n` +
+        `Balance: <b>${hbar} ℏ</b>\n` +
+        `Created: ${account.created_at}\n` +
+        `Last used: ${account.last_used || "never"}`
+      );
+    } catch (e) {
+      return sendMessage(chatId, `❌ Error: ${e.message}`);
+    }
+  }
+
+  // /digest — activity summary for the last 24 hours
+  if (text === "/digest") {
+    if (!isOwner) return sendMessage(chatId, "⛔ Owner only.");
+    try {
+      const { getRecentTransactions, getAllAccounts } = await import("./db.js");
+      const allTxs  = getRecentTransactions(1000);
+      const since   = new Date(Date.now() - 86_400_000).toISOString().slice(0, 19);
+      const recent  = allTxs.filter(t => t.timestamp >= since);
+      const earned  = recent.reduce((s, t) => s + t.amount_tinybars, 0) / 100_000_000;
+      // Tool usage breakdown
+      const toolCounts = {};
+      for (const t of recent) toolCounts[t.tool_name] = (toolCounts[t.tool_name] || 0) + 1;
+      const topTools = Object.entries(toolCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name, count]) => `  ${name}: ${count}`)
+        .join("\n") || "  none";
+      // Unique active accounts
+      const activeAccounts = new Set(recent.map(t => t.api_key)).size;
+      return sendMessage(chatId,
+        `📅 <b>Last 24h digest</b>\n\n` +
+        `Tool calls: <b>${recent.length}</b>\n` +
+        `HBAR earned: <b>${earned.toFixed(4)} ℏ</b>\n` +
+        `Active accounts: <b>${activeAccounts}</b>\n\n` +
+        `<b>Top tools:</b>\n${topTools}`
+      );
+    } catch (e) {
+      return sendMessage(chatId, `❌ Digest error: ${e.message}`);
+    }
   }
 
   // Add user message to history
