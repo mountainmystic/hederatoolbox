@@ -96,10 +96,11 @@ export async function deepAnalyze(messages, analysisType) {
     const client = getAnthropic();
     response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 1500,
+      max_tokens: 2000,
       system: `You are a deep analyst for Hedera blockchain data.
 ${prompts[analysisType]}
-Respond with JSON only (no markdown): { "executive_summary": "...", "findings": [], "risk_level": "low|medium|high", "recommendations": [] }`,
+Respond with JSON only (no markdown). Be concise — keep each string field under 200 characters and each array to 3 items maximum.
+Format: { "executive_summary": "...", "findings": ["...", "..."], "risk_level": "low|medium|high", "recommendations": ["...", "..."] }`,
       messages: [
         {
           role: "user",
