@@ -32,7 +32,7 @@ Built for agents that need to *reason* about Hedera, not just interact with it.
 
 **MCP endpoint:**
 ```
-https://hedera-mcp-platform-production.up.railway.app/mcp
+https://api.hederatoolbox.com/mcp
 ```
 
 **Claude.ai** (web or mobile)
@@ -88,7 +88,7 @@ HITL is enforced on **operation type**, not balance size. HederaToolbox is prima
 | Same tool called >20 times in 60s | Loop guard | Blocked — agent must wait 60 seconds before retrying |
 | All other tools | Auto | Executes immediately, no intervention |
 
-Terms of Service: `get_terms` tool or [/public/terms.json](https://hedera-mcp-platform-production.up.railway.app/public/terms.json)
+Terms of Service: `get_terms` tool or [/public/terms.json](https://api.hederatoolbox.com/public/terms.json)
 
 ---
 
