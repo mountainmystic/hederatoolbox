@@ -86,8 +86,13 @@ HOW IT WORKS
 - Balance is deducted per call. Top up any time by sending more HBAR.
 - No minimum deposit. No forms. No registration.
 
-CONNECTION CONFIG (Claude Desktop or Cursor)
-Add to claude_desktop_config.json under mcpServers:
+CONNECTION OPTIONS
+
+Claude.ai (web or mobile):
+Settings → Connectors → Add custom connector → paste:
+https://api.hederatoolbox.com/mcp
+
+Claude Desktop (claude_desktop_config.json under mcpServers):
 {
   "hederatoolbox": {
     "command": "npx",
@@ -95,6 +100,9 @@ Add to claude_desktop_config.json under mcpServers:
   }
 }
 Then restart Claude Desktop.
+
+Cursor or any MCP-compatible client:
+Use the endpoint URL directly: https://api.hederatoolbox.com/mcp
 
 TOOLS AND COSTS
 Free: account_info, get_terms, confirm_terms
@@ -216,15 +224,10 @@ export async function handleTelegramUpdate(update) {
     return sendMessage(chatId,
       `<b>HederaToolbox Bot</b>\n\n` +
       `Ask me anything about:\n` +
-      `• Connecting via Claude Desktop or Cursor\n` +
-      `• How authentication works\n` +
+      `• Connecting via Claude.ai, Claude Desktop, or Cursor\n` +
+      `• How authentication and deposits work\n` +
       `• Which tools to use for your use case\n` +
-      `• Pricing and deposits\n\n` +
-      `<b>Owner commands:</b>\n` +
-      `/status — platform health snapshot\n` +
-      `/accounts — top 10 accounts by balance\n` +
-      `/balance &lt;account_id&gt; — look up any account\n` +
-      `/digest — today's activity summary\n\n` +
+      `• Pricing and tool costs\n\n` +
       `Or just ask in plain English.`
     );
   }
