@@ -30,11 +30,16 @@ Built for agents that need to *reason* about Hedera, not just interact with it.
 
 ## Connect
 
+**MCP endpoint:**
 ```
 https://hedera-mcp-platform-production.up.railway.app/mcp
 ```
 
-**For Claude Desktop or Cursor** (recommended — uses the npm proxy):
+**Claude.ai** (web or mobile)
+Settings → Connectors → Add → paste the endpoint URL above.
+
+**Claude Desktop app**
+Add to `claude_desktop_config.json` under `mcpServers`:
 
 ```json
 {
@@ -47,17 +52,8 @@ https://hedera-mcp-platform-production.up.railway.app/mcp
 }
 ```
 
-**Direct HTTP connection:**
-
-```json
-{
-  "mcpServers": {
-    "hederatoolbox": {
-      "url": "https://hedera-mcp-platform-production.up.railway.app/mcp"
-    }
-  }
-}
-```
+**Cursor / other MCP-compatible clients**
+Use the endpoint URL directly in your MCP server config.
 
 ---
 
@@ -175,8 +171,6 @@ Accepts both Hedera native IDs (`0.0.123456`) and EVM addresses (`0x...`).
 - **HCS message sanitisation** — control characters and malformed content stripped before AI analysis
 - **Robust JSON parsing** — AI responses now use a fallback parser; one bad HCS message can no longer crash the analysis tools
 - **Ghost deposit fix** — zero-value staking redistribution entries no longer trigger false deposit notifications
-
----
 
 ## Known Limitations
 
