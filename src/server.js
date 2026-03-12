@@ -24,10 +24,38 @@ export const ALL_TOOLS = [
   ...CONTRACT_TOOL_DEFINITIONS,
 ];
 
-// Tools that bypass consent + HITL entirely
+// Tools that bypass consent entirely
 const FREE_TOOLS = new Set(["account_info", "get_terms", "confirm_terms"]);
 
+// ── API key validation ────────────────────────────────────────────────────────
+// Reject keys that are empty, too long, or clearly malformed.
+// Hedera account IDs follow 0.0.XXXXXX format — enforce this for paid tools.
+const API_KEY_MAX_LENGTH = 64;
+const API_KEY_FORMAT = /^\d+\.\d+\.\d+$/; // e.g. 0.0.123456
+
+function validateApiKey(apiKey, toolName) {
+  if (FREE_TOOLS.has(toolName)) return; // free tools don't require a key
+  if (!apiKey || typeof apiKey !== "string") {
+    throw new Error(
+      `Missing api_key. Pass your Hedera account ID (e.g. 0.0.123456) as api_key. ` +
+      `Call account_info to get the platform wallet address and funding instructions.`
+    );
+  }
+  if (apiKey.length > API_KEY_MAX_LENGTH) {
+    throw new Error(`Invalid api_key: exceeds maximum length of ${API_KEY_MAX_LENGTH} characters.`);
+  }
+  if (!API_KEY_FORMAT.test(apiKey)) {
+    throw new Error(
+      `Invalid api_key format. Expected Hedera account ID format: 0.0.XXXXXX (e.g. 0.0.123456). ` +
+      `Call account_info if you need help getting started.`
+    );
+  }
+}
+
 async function routeTool(name, args, req) {
+  // ── API key validation ──────────────────────────────────────────────────────
+  validateApiKey(args?.api_key, name);
+
   // Legal tools (no consent check — they ARE the consent flow)
   if (["get_terms", "confirm_terms"].includes(name)) return executeLegalTool(name, args, req);
   if (name === "account_info") return executeAccountTool(name, args);
