@@ -8,7 +8,6 @@ import {
 import axios from "axios";
 import crypto from "crypto";
 import { chargeForTool } from "../../payments.js";
-import { enforceHITL } from "../../hitl.js";
 
 let hederaClient;
 
@@ -79,9 +78,6 @@ export const COMPLIANCE_TOOL_DEFINITIONS = [
 
 export async function executeComplianceTool(name, args) {
   if (name === "hcs_write_record") {
-    // HITL notify tier — executes immediately but sends webhook notification
-    await enforceHITL("hcs_write_record", args.api_key, "2.0000");
-
     const payment = chargeForTool("hcs_write_record", args.api_key);
     const client = getClient();
     const topicId = args.topic_id || PLATFORM_TOPIC;
