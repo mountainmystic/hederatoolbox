@@ -10,6 +10,8 @@ src/server-entry.js
 src/payments.js
 src/db.js
 src/watcher.js
+src/hitl.js
+src/telegram.js
 src/modules/
 
 # ─── Dev & build artifacts ────────────────────────────────────────────────
@@ -33,3 +35,9 @@ npm
 journal.txt
 server.json
 package-lock.json
+step4-verify.mjs
+test-backup
+master
+docs/
+.github/
+.node-version/
