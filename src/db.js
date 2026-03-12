@@ -236,6 +236,22 @@ export function getLatestConsent(apiKey) {
   return consentStmts.getLatest.get(apiKey) || null;
 }
 
+// Purge IP and user_agent from consent_events older than 90 days.
+// Called once on startup and daily from the digest scheduler.
+// The consent record itself is kept — only PII fields are cleared.
+export function purgeOldConsentPII() {
+  const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 19);
+  const result = db.prepare(`
+    UPDATE consent_events
+    SET ip_address = NULL, user_agent = NULL
+    WHERE timestamp < ? AND (ip_address IS NOT NULL OR user_agent IS NOT NULL)
+  `).run(cutoff);
+  if (result.changes > 0) {
+    console.error(`[Privacy] Purged PII from ${result.changes} consent records older than 90 days`);
+  }
+  return result.changes;
+}
+
 // ─────────────────────────────────────────────
 // Rate limiting (SQLite-backed — survives restarts)
 // ─────────────────────────────────────────────

@@ -4,7 +4,7 @@
 import "dotenv/config";
 import { createServer, ALL_TOOLS } from "./server.js";
 import { getCosts } from "./payments.js";
-import { provisionKey, getAllAccounts, getRecentTransactions, checkRateLimit } from "./db.js";
+import { provisionKey, getAllAccounts, getRecentTransactions, checkRateLimit, purgeOldConsentPII } from "./db.js";
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import path from "path";
@@ -224,9 +224,12 @@ const httpServer = http.createServer(async (req, res) => {
     return;
   }
 
-  // SQLite backup endpoint — downloads the raw database file
+  // SQLite backup endpoint — protected by BACKUP_SECRET (separate from ADMIN_SECRET)
   if (req.method === "GET" && url.pathname === "/admin/backup") {
-    if (!isAdmin(req)) return json(res, 401, { error: "Unauthorized" });
+    const backupSecret = process.env.BACKUP_SECRET;
+    if (!backupSecret || req.headers["x-backup-secret"] !== backupSecret) {
+      return json(res, 401, { error: "Unauthorized. Requires x-backup-secret header." });
+    }
     try {
       const dbPath = process.env.DB_PATH || "/data/hederatoolbox.db";
       const dbFile = readFileSync(dbPath);
@@ -443,6 +446,9 @@ httpServer.listen(port, () => {
 startWatcher();
 registerWebhook();
 
+// Run PII purge immediately on startup, then daily via digest scheduler
+purgeOldConsentPII();
+
 // ── Automatic daily digest at 08:00 UTC ───────────────────────────────────
 // Sends a morning summary to the owner so you wake up knowing how the
 // platform performed overnight without having to check anything manually.
@@ -484,6 +490,8 @@ function scheduleDailyDigest() {
         `Accounts: <b>${allAccounts.length}</b>\n` +
         `HBAR held: <b>${totalHeld.toFixed(4)} ℏ</b>`
       );
+      // Purge old PII daily alongside digest
+      purgeOldConsentPII();
       console.error("[Digest] Daily digest sent");
     } catch (e) {
       console.error(`[Digest] Failed: ${e.message}`);
