@@ -20,7 +20,7 @@ Built for agents that need to *reason* about Hedera, not just interact with it.
 
 [![Terminal Agent Demo](https://img.youtube.com/vi/XhOCLrILg1o/0.jpg)](https://youtu.be/XhOCLrILg1o)
 
-[![npm](https://img.shields.io/npm/v/@hederatoolbox/platform)](https://www.npmjs.com/package/@hederatoolbox/platform)
+[![npm](https://img.shields.io/npm/v/@hederatoolbox/platform?label=npm)](https://www.npmjs.com/package/@hederatoolbox/platform)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-listed-blue)](https://registry.modelcontextprotocol.io)
 [![Network](https://img.shields.io/badge/Hedera-Mainnet-8A2BE2)](https://hedera.com)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE.md)

@@ -2,7 +2,7 @@
 
 > This document is the authoritative, versioned record of what HederaToolbox can and cannot do.
 > It is written for AI agents, developers, and enterprise evaluators.
-> Version: 3.2.0 | Updated: 2026-03-10
+> Version: 3.3.1 | Updated: 2026-03-12
 
 ---
 
