@@ -15,7 +15,7 @@ let draftCounter = 0;
 
 // ─── Anthropic Haiku synthesis ────────────────────────────────────────────────
 
-async function synthesiseTweet(toolData) {
+async function synthesiseTweet(toolData, angle = "") {
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_KEY) throw new Error("ANTHROPIC_API_KEY not set");
 
@@ -40,7 +40,7 @@ RULES:
 - Anomaly alerts only: may use ⚠️ as a single flag
 - Output ONLY the tweet text. No preamble, no quotes.`;
 
-  const userPrompt = `Here is live Hedera on-chain data from our tool calls:\n\n${toolData}\n\nWrite a single tweet.`;
+  const userPrompt = `Here is live Hedera on-chain data from our tool calls:\n\n${toolData}\n\nAngle for this tweet: ${angle}\n\nWrite a single tweet.`;
 
   const body = JSON.stringify({
     model: "claude-haiku-4-5-20251001",
@@ -150,6 +150,49 @@ async function callTool(toolName, toolArgs = {}) {
   });
 }
 
+// ─── Run profiles — each demonstrates different HederaToolbox capabilities ────
+// Rotates so the account never tweets the same angle twice in a row.
+// Each profile maps to a different set of tools + framing.
+
+const RUN_PROFILES = [
+  {
+    name: "token-intelligence",
+    angle: "Token market & whale intelligence",
+    tools: () => Promise.all([
+      callTool("token_price",   { token_id: "0.0.731861" }),  // SAUCE — most liquid SaucerSwap token
+      callTool("token_monitor", { token_id: "0.0.731861" }),
+    ]),
+  },
+  {
+    name: "hcs-intelligence",
+    angle: "HCS topic monitoring & anomaly detection",
+    tools: () => Promise.all([
+      callTool("hcs_monitor",    { topic_id: "0.0.10353855" }), // HederaToolbox compliance topic
+      callTool("hcs_understand", { topic_id: "0.0.10353855" }),
+    ]),
+  },
+  {
+    name: "identity-compliance",
+    angle: "Identity screening & compliance verification",
+    tools: () => Promise.all([
+      callTool("identity_resolve",         { account_id: "0.0.10309126" }), // platform wallet — always active
+      callTool("identity_check_sanctions", { account_id: "0.0.10309126" }),
+    ]),
+  },
+  {
+    name: "contract-intelligence",
+    angle: "Smart contract risk & caller analysis",
+    tools: () => Promise.all([
+      callTool("contract_read",    { contract_id: "0.0.1460200" }), // SaucerSwap router — high activity
+      callTool("contract_analyze", { contract_id: "0.0.1460200" }),
+    ]),
+  },
+];
+
+// Cycle index persists across restarts via a simple in-memory counter.
+// On redeploy it resets to 0, which is fine — rotation is approximate.
+let profileIndex = 0;
+
 // ─── Main data-gathering + synthesis cycle ────────────────────────────────────
 
 export async function runXAgentCycle(label = "scheduled") {
@@ -158,15 +201,14 @@ export async function runXAgentCycle(label = "scheduled") {
     return;
   }
 
-  console.error(`[XAgent] Starting ${label} run`);
+  // Pick current profile and advance index for next run
+  const profile = RUN_PROFILES[profileIndex % RUN_PROFILES.length];
+  profileIndex++;
 
-  // Call 3 tools in parallel — governance_monitor omitted (400s when no active proposals)
-  // SAUCE (0.0.731861) is the most liquid mainnet token on SaucerSwap — reliable price data
-  const results = await Promise.all([
-    callTool("token_price",    { token_id: "0.0.731861" }),   // SAUCE token
-    callTool("token_monitor",  { token_id: "0.0.731861" }),
-    callTool("hcs_understand", { topic_id: "0.0.10353855" }), // platform compliance topic
-  ]);
+  console.error(`[XAgent] Starting ${label} run — profile: ${profile.name}`);
+
+  const results = (await profile.tools()).map(r => ({ ...r }));
+  // Flatten: results from profile.tools() are already { tool, success, content } objects
 
   const successCount = results.filter(r => r.success).length;
   if (successCount === 0) {
@@ -196,7 +238,7 @@ export async function runXAgentCycle(label = "scheduled") {
   // Synthesise tweet via Haiku
   let tweetText;
   try {
-    tweetText = await synthesiseTweet(toolData);
+    tweetText = await synthesiseTweet(toolData, profile.angle);
   } catch (e) {
     console.error(`[XAgent] Haiku synthesis failed: ${e.message}`);
     await notifyOwner(`⚠️ <b>XAgent</b>: Tweet synthesis failed.\n${e.message}`);
