@@ -102,9 +102,9 @@ Terms of Service: `get_terms` tool or [/public/terms.json](https://api.hederatoo
 
 | Tool | Cost | Description |
 |------|------|-------------|
-| `hcs_monitor` | 0.05 HBAR | Topic status, message count, recent activity |
-| `hcs_query` | 0.05 HBAR | Natural language Q&A over topic messages, AI-ranked |
-| `hcs_understand` | 0.50 HBAR | Anomaly detection, trend analysis, entity extraction |
+| `hcs_monitor` | 0.10 HBAR | Topic status, message count, recent activity |
+| `hcs_query` | 0.10 HBAR | Natural language Q&A over topic messages, AI-ranked |
+| `hcs_understand` | 1.00 HBAR | Anomaly detection, trend analysis, entity extraction |
 
 ---
 
@@ -112,9 +112,9 @@ Terms of Service: `get_terms` tool or [/public/terms.json](https://api.hederatoo
 
 | Tool | Cost | Description |
 |------|------|-------------|
-| `hcs_write_record` | 2.00 HBAR | Write tamper-evident record to HCS |
-| `hcs_verify_record` | 0.50 HBAR | Verify a record has not been altered |
-| `hcs_audit_trail` | 1.00 HBAR | Full chronological audit history for an entity |
+| `hcs_write_record` | 5.00 HBAR | Write tamper-evident record to HCS |
+| `hcs_verify_record` | 1.00 HBAR | Verify a record has not been altered |
+| `hcs_audit_trail` | 2.00 HBAR | Full chronological audit history for an entity |
 
 ---
 
@@ -122,8 +122,8 @@ Terms of Service: `get_terms` tool or [/public/terms.json](https://api.hederatoo
 
 | Tool | Cost | Description |
 |------|------|-------------|
-| `governance_monitor` | 0.10 HBAR | Active proposals, deadlines, current vote tallies |
-| `governance_analyze` | 0.50 HBAR | Voter sentiment, participation rate, outcome prediction |
+| `governance_monitor` | 0.20 HBAR | Active proposals, deadlines, current vote tallies |
+| `governance_analyze` | 1.00 HBAR | Voter sentiment, participation rate, outcome prediction |
 
 ---
 
@@ -131,9 +131,9 @@ Terms of Service: `get_terms` tool or [/public/terms.json](https://api.hederatoo
 
 | Tool | Cost | Description |
 |------|------|-------------|
-| `token_price` | 0.05 HBAR | Spot price, 1h/24h/7d change, liquidity — via SaucerSwap |
-| `token_monitor` | 0.10 HBAR | Recent transfers, whale movements, unusual patterns |
-| `token_analyze` | 0.30 HBAR | Holder distribution, velocity, concentration, risk score |
+| `token_price` | 0.10 HBAR | Spot price, 1h/24h/7d change, liquidity — via SaucerSwap |
+| `token_monitor` | 0.20 HBAR | Recent transfers, whale movements, unusual patterns |
+| `token_analyze` | 0.60 HBAR | Holder distribution, velocity, concentration, risk score |
 
 ---
 
@@ -141,9 +141,9 @@ Terms of Service: `get_terms` tool or [/public/terms.json](https://api.hederatoo
 
 | Tool | Cost | Description |
 |------|------|-------------|
-| `identity_resolve` | 0.10 HBAR | Account profile: age, holdings, transaction history |
-| `identity_verify_kyc` | 0.20 HBAR | KYC grant status and verification history for a token |
-| `identity_check_sanctions` | 0.50 HBAR | On-chain risk screening, counterparty patterns |
+| `identity_resolve` | 0.20 HBAR | Account profile: age, holdings, transaction history |
+| `identity_verify_kyc` | 0.50 HBAR | KYC grant status and verification history for a token |
+| `identity_check_sanctions` | 1.00 HBAR | On-chain risk screening, counterparty patterns |
 
 ---
 
@@ -151,9 +151,9 @@ Terms of Service: `get_terms` tool or [/public/terms.json](https://api.hederatoo
 
 | Tool | Cost | Description |
 |------|------|-------------|
-| `contract_read` | 0.10 HBAR | Metadata, bytecode size, recent callers, gas stats |
-| `contract_call` | 0.50 HBAR | Read-only function call — no gas, no transaction |
-| `contract_analyze` | 1.00 HBAR | Activity patterns, caller distribution, risk classification |
+| `contract_read` | 0.20 HBAR | Metadata, bytecode size, recent callers, gas stats |
+| `contract_call` | 1.00 HBAR | Read-only function call — no gas, no transaction |
+| `contract_analyze` | 1.50 HBAR | Activity patterns, caller distribution, risk classification |
 
 Accepts both Hedera native IDs (`0.0.123456`) and EVM addresses (`0x...`).
 
