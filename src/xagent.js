@@ -22,7 +22,7 @@ async function synthesiseTweet(toolData) {
   const systemPrompt = `You are a dry, data-driven analyst writing a tweet for @HederaToolBox.
 
 RULES:
-- Max 240 characters including hashtags
+- HARD LIMIT: 240 characters maximum including hashtags. Count carefully. If in doubt, cut words.
 - Must anchor on at least one concrete on-chain data point from the tool output
 - Analyst voice: direct, no hype, no exclamation marks
 - Max 2 hashtags from this approved list only: #Hedera #HBAR #HCS #HederaHashgraph #Web3 #AIAgents #MCP #OnChain
@@ -151,13 +151,12 @@ export async function runXAgentCycle(label = "scheduled") {
 
   console.error(`[XAgent] Starting ${label} run`);
 
-  // Call 4 tools in parallel — if any fail, log and continue with remaining data
+  // Call 3 tools in parallel — governance_monitor omitted (400s when no active proposals)
   // SAUCE (0.0.731861) is the most liquid mainnet token on SaucerSwap — reliable price data
   const results = await Promise.all([
-    callTool("token_price",        { token_id: "0.0.731861" }),   // SAUCE token
-    callTool("token_monitor",      { token_id: "0.0.731861" }),
-    callTool("governance_monitor", {}),
-    callTool("hcs_understand",     { topic_id: "0.0.10353855" }), // platform compliance topic
+    callTool("token_price",    { token_id: "0.0.731861" }),   // SAUCE token
+    callTool("token_monitor",  { token_id: "0.0.731861" }),
+    callTool("hcs_understand", { topic_id: "0.0.10353855" }), // platform compliance topic
   ]);
 
   const successCount = results.filter(r => r.success).length;
