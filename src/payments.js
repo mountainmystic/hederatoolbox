@@ -5,28 +5,28 @@ import { deductBalance, getBalance as dbGetBalance } from "./db.js";
 
 export const COSTS = {
   // Module 1 - HCS Topic Intelligence
-  hcs_monitor:              { tinybars: 5000000,   hbar: "0.0500" },
-  hcs_query:                { tinybars: 5000000,   hbar: "0.0500" },
-  hcs_understand:           { tinybars: 50000000,  hbar: "0.5000" },
+  hcs_monitor:              { tinybars: 10000000,  hbar: "0.1000" },
+  hcs_query:                { tinybars: 10000000,  hbar: "0.1000" },
+  hcs_understand:           { tinybars: 100000000, hbar: "1.0000" },
   // Module 2 - Compliance & Audit Trail
-  hcs_write_record:         { tinybars: 200000000, hbar: "2.0000" },
-  hcs_verify_record:        { tinybars: 50000000,  hbar: "0.5000" },
-  hcs_audit_trail:          { tinybars: 100000000, hbar: "1.0000" },
+  hcs_write_record:         { tinybars: 500000000, hbar: "5.0000" },
+  hcs_verify_record:        { tinybars: 100000000, hbar: "1.0000" },
+  hcs_audit_trail:          { tinybars: 200000000, hbar: "2.0000" },
   // Module 3 - Governance Intelligence
-  governance_monitor:       { tinybars: 10000000,  hbar: "0.1000" },
-  governance_analyze:       { tinybars: 50000000,  hbar: "0.5000" },
+  governance_monitor:       { tinybars: 20000000,  hbar: "0.2000" },
+  governance_analyze:       { tinybars: 100000000, hbar: "1.0000" },
   // Module 4 - Token Intelligence
-  token_price:              { tinybars: 5000000,   hbar: "0.0500" },
-  token_analyze:            { tinybars: 30000000,  hbar: "0.3000" },
-  token_monitor:            { tinybars: 10000000,  hbar: "0.1000" },
+  token_price:              { tinybars: 10000000,  hbar: "0.1000" },
+  token_analyze:            { tinybars: 60000000,  hbar: "0.6000" },
+  token_monitor:            { tinybars: 20000000,  hbar: "0.2000" },
   // Module 5 - Verified Identity Resolution
-  identity_resolve:         { tinybars: 10000000,  hbar: "0.1000" },
-  identity_verify_kyc:      { tinybars: 20000000,  hbar: "0.2000" },
-  identity_check_sanctions: { tinybars: 50000000,  hbar: "0.5000" },
+  identity_resolve:         { tinybars: 20000000,  hbar: "0.2000" },
+  identity_verify_kyc:      { tinybars: 50000000,  hbar: "0.5000" },
+  identity_check_sanctions: { tinybars: 100000000, hbar: "1.0000" },
   // Module 6 - Smart Contract Abstraction
-  contract_read:            { tinybars: 10000000,  hbar: "0.1000" },
-  contract_call:            { tinybars: 50000000,  hbar: "0.5000" },
-  contract_analyze:         { tinybars: 100000000, hbar: "1.0000" },
+  contract_read:            { tinybars: 20000000,  hbar: "0.2000" },
+  contract_call:            { tinybars: 100000000, hbar: "1.0000" },
+  contract_analyze:         { tinybars: 150000000, hbar: "1.5000" },
 };
 
 // Called by every tool before executing. Deducts cost from the account's

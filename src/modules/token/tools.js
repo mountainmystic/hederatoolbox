@@ -55,7 +55,7 @@ async function getSaucerSwapDefaultTokens() {
 export const TOKEN_TOOL_DEFINITIONS = [
   {
     name: "token_price",
-    description: "Get the current price, market cap, and 24h trading volume for a Hedera token. Costs 0.05 HBAR.",
+    description: "Get the current price, market cap, and 24h trading volume for a Hedera token. Costs 0.1 HBAR.",
     inputSchema: {
       type: "object",
       properties: {
@@ -67,7 +67,7 @@ export const TOKEN_TOOL_DEFINITIONS = [
   },
   {
     name: "token_analyze",
-    description: "Deep analysis of a Hedera token including holder distribution, transfer velocity, liquidity, and risk scoring. Costs 0.3 HBAR.",
+    description: "Deep analysis of a Hedera token including holder distribution, transfer velocity, liquidity, and risk scoring. Costs 0.6 HBAR.",
     inputSchema: {
       type: "object",
       properties: {
@@ -79,7 +79,7 @@ export const TOKEN_TOOL_DEFINITIONS = [
   },
   {
     name: "token_monitor",
-    description: "Monitor recent token transfer activity, whale movements, and unusual trading patterns for a Hedera token. Costs 0.1 HBAR.",
+    description: "Monitor recent token transfer activity, whale movements, and unusual trading patterns for a Hedera token. Costs 0.2 HBAR.",
     inputSchema: {
       type: "object",
       properties: {

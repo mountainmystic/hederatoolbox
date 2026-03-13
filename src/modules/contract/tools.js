@@ -123,7 +123,7 @@ function getMirrorNodeBase() {
 export const CONTRACT_TOOL_DEFINITIONS = [
   {
     name: "contract_read",
-    description: "Read state from a Hedera smart contract - get contract info, bytecode size, recent activity, and storage details without executing a transaction. Costs 0.1 HBAR.",
+    description: "Read state from a Hedera smart contract - get contract info, bytecode size, recent activity, and storage details without executing a transaction. Costs 0.2 HBAR.",
     inputSchema: {
       type: "object",
       properties: {
@@ -135,7 +135,7 @@ export const CONTRACT_TOOL_DEFINITIONS = [
   },
   {
     name: "contract_call",
-    description: "Execute a read-only call to a Hedera smart contract function and return the result. Does not submit a transaction or cost gas. Costs 0.5 HBAR.",
+    description: "Execute a read-only call to a Hedera smart contract function and return the result. Does not submit a transaction or cost gas. Costs 1.0 HBAR.",
     inputSchema: {
       type: "object",
       properties: {
@@ -151,7 +151,7 @@ export const CONTRACT_TOOL_DEFINITIONS = [
   },
   {
     name: "contract_analyze",
-    description: "Deep analysis of a Hedera smart contract including activity patterns, caller distribution, gas usage, risk assessment, and functional classification. Costs 1 HBAR.",
+    description: "Deep analysis of a Hedera smart contract including activity patterns, caller distribution, gas usage, risk assessment, and functional classification. Costs 1.5 HBAR.",
     inputSchema: {
       type: "object",
       properties: {
