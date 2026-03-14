@@ -4,6 +4,11 @@
 
 **20 tools. 6 modules. Pay per call in HBAR. No registration.**
 
+[![npm](https://img.shields.io/npm/v/@hederatoolbox/platform?label=npm)](https://www.npmjs.com/package/@hederatoolbox/platform)
+[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-listed-blue)](https://registry.modelcontextprotocol.io)
+[![Network](https://img.shields.io/badge/Hedera-Mainnet-8A2BE2)](https://hedera.com)
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE.md)
+
 HederaToolbox is a production [Model Context Protocol](https://modelcontextprotocol.io) server. It gives AI agents structured, metered access to the full Hedera ecosystem — HCS topics, tokens, identity, smart contracts, governance, and compliance.
 
 Built for agents that need to *reason* about Hedera, not just interact with it.
@@ -16,14 +21,9 @@ Built for agents that need to *reason* about Hedera, not just interact with it.
 
 [![Claude Desktop Demo](https://img.youtube.com/vi/RuZE-Qw7IgU/0.jpg)](https://youtu.be/RuZE-Qw7IgU)
 
-**Terminal agent** — same workflow running as a standalone Node.js script:
+**Terminal agent** — autonomous compliance workflow running headless:
 
 [![Terminal Agent Demo](https://img.youtube.com/vi/XhOCLrILg1o/0.jpg)](https://youtu.be/XhOCLrILg1o)
-
-[![npm](https://img.shields.io/npm/v/@hederatoolbox/platform?label=npm)](https://www.npmjs.com/package/@hederatoolbox/platform)
-[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-listed-blue)](https://registry.modelcontextprotocol.io)
-[![Network](https://img.shields.io/badge/Hedera-Mainnet-8A2BE2)](https://hedera.com)
-[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE.md)
 
 ---
 
@@ -41,6 +41,10 @@ cd hederatoolbox
 # Your account ID becomes your API key automatically within 10 seconds.
 # Platform wallet: 0.0.10309126
 ```
+
+> **Windows users:** set env vars before running:
+> `set HEDERA_ACCOUNT_ID=0.0.YOUR_ID && set TOKEN_ID=0.0.731861 && node examples/whale-alert-agent.mjs`
+> Or edit the config constants directly at the top of each file.
 
 ---
 
@@ -241,16 +245,15 @@ Accepts both Hedera native IDs (`0.0.123456`) and EVM addresses (`0x...`).
 
 ---
 
-## What's New in v3.4.0
+## Changelog
 
-- **Repriced all tools** — prices updated across all 6 modules to reflect platform maturity and value delivered
+**v3.4.2** — X agent (Telegram-gated autonomous tweet drafting), agent examples added to repo
 
-## What's New in v3.3.0
+**v3.4.0** — Repriced all tools across all 6 modules
 
-- **Full security audit** — SQLite-backed rate limiting, API key format validation, request body size limiting, separate BACKUP_SECRET, 90-day auto-purge of IP/user-agent from consent records
-- **HITL removed** — human-in-the-loop hard-stop removed entirely; all tools execute directly
-- **Legal pages** — Privacy Policy and Terms of Service published at hederatoolbox.com
-- **Permanent endpoint** — MCP endpoint is `https://api.hederatoolbox.com/mcp`
+**v3.3.1** — Full security audit: SQLite-backed rate limiting, API key validation, 1MB body cap, separate BACKUP_SECRET, 90-day PII purge, HITL removed, legal pages deployed
+
+---
 
 ## Known Limitations
 
