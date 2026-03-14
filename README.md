@@ -124,7 +124,13 @@ https://api.hederatoolbox.com/mcp
 Settings → Connectors → Add → paste the endpoint URL above.
 
 **Claude Desktop app**
-Add to `claude_desktop_config.json` under `mcpServers`:
+
+Step 1 — install the package globally (required, do this once):
+```bash
+npm install -g @hederatoolbox/platform
+```
+
+Step 2 — add to `claude_desktop_config.json` under `mcpServers`:
 
 ```json
 {
@@ -136,6 +142,15 @@ Add to `claude_desktop_config.json` under `mcpServers`:
   }
 }
 ```
+
+Restart Claude Desktop after saving the config.
+
+> **Windows users:** if you see `npm error could not determine executable to run`, your npm global directory may not exist yet. Run these first:
+> ```
+> mkdir %APPDATA%\npm
+> npm config set prefix %APPDATA%\npm
+> npm install -g @hederatoolbox/platform
+> ```
 
 **Cursor / other MCP-compatible clients**
 Use the endpoint URL directly in your MCP server config.
