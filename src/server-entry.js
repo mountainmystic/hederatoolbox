@@ -387,7 +387,7 @@ function getDashboardHTML() {
   @media(max-width:900px){ .grid-5{ grid-template-columns: repeat(3,1fr); } .grid-3{ grid-template-columns:1fr 1fr; } .grid-2{ grid-template-columns:1fr; } }
   @media(max-width:600px){ .grid-5{ grid-template-columns: 1fr 1fr; } }
   /* Cards */
-  .card { background: #111; border: 1px solid #1e1e1e; border-radius: 10px; padding: 16px; }
+  .card { background: #111; border: 1px solid #1e1e1e; border-radius: 8px; padding: 12px; }
   .card-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #555; margin-bottom: 6px; }
   .card-value { font-size: 26px; font-weight: 700; color: #fff; line-height: 1; }
   .card-sub { font-size: 11px; color: #444; margin-top: 5px; }
@@ -454,7 +454,7 @@ function getDashboardHTML() {
 <div style="display:grid;grid-template-columns:280px 1fr;gap:0;min-height:calc(100vh - 49px)">
 
 <!-- LEFT: Controls -->
-<div style="border-right:1px solid #1a1a1a;padding:20px;display:flex;flex-direction:column;gap:16px">
+<div style="border-right:1px solid #1a1a1a;padding:16px;display:flex;flex-direction:column;gap:10px">
 
   <!-- KPI stack -->
   <div class="card"><div class="card-label">Total Calls</div><div class="card-value" id="kpi-calls">—</div></div>
@@ -464,7 +464,7 @@ function getDashboardHTML() {
   <div class="card"><div class="card-label">Rate Limit Hits</div><div class="card-value" id="kpi-ratelimit">—</div><div class="card-sub">last 24h</div></div>
 
   ${hasXAgent ? `<!-- X Agent -->
-  <div style="border-top:1px solid #1a1a1a;padding-top:16px">
+  <div style="border-top:1px solid #1a1a1a;padding-top:10px">
     <div class="sec-head">X Agent</div>
     <div class="card" style="margin-bottom:8px"><div class="card-label">Balance</div><div class="card-value" id="xa-balance">—</div><div class="card-sub">xagent-internal</div></div>
     <div class="card" style="margin-bottom:8px"><div class="card-label">Calls (24h)</div><div class="card-value" id="xa-calls">—</div><div class="card-sub" id="xa-spent"></div></div>
@@ -472,7 +472,7 @@ function getDashboardHTML() {
   </div>` : ''}
 
   <!-- Provision / Top Up -->
-  <div style="border-top:1px solid #1a1a1a;padding-top:16px">
+  <div style="border-top:1px solid #1a1a1a;padding-top:10px">
     <div class="sec-head">Provision / Top Up</div>
     <div style="font-size:11px;color:#444;margin-bottom:8px">Add balance to any internal account key.</div>
     <input id="ctrl-key" placeholder="API key (e.g. xagent-internal)" style="width:100%;background:#0a0a0a;border:1px solid #2a2a2a;color:#e0e0e0;padding:7px 9px;border-radius:6px;font-size:12px;margin-bottom:8px">
@@ -482,7 +482,7 @@ function getDashboardHTML() {
   </div>
 
   <!-- Platform wallet -->
-  <div style="border-top:1px solid #1a1a1a;padding-top:16px">
+  <div style="border-top:1px solid #1a1a1a;padding-top:10px">
     <div class="sec-head">Platform Wallet</div>
     <div class="qr-inline">
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=56x56&data=${platformAccount}" width="56" height="56" alt="QR">
@@ -494,7 +494,7 @@ function getDashboardHTML() {
   </div>
 
   <!-- GDPR delete -->
-  <div style="border-top:1px solid #1a1a1a;padding-top:16px">
+  <div style="border-top:1px solid #1a1a1a;padding-top:10px">
     <div class="sec-head">GDPR Delete Account</div>
     <input id="del-key" placeholder="API key to delete" style="width:100%;background:#0a0a0a;border:1px solid #2a2a2a;color:#e0e0e0;padding:7px 9px;border-radius:6px;font-size:12px;margin-bottom:8px">
     <button class="btn danger" style="width:100%" onclick="openDeleteModal()">Delete Account…</button>
@@ -504,18 +504,19 @@ function getDashboardHTML() {
 </div>
 
 <!-- RIGHT: Data panels -->
-<div style="padding:20px;display:flex;flex-direction:column;gap:20px;overflow-y:auto">
+<div style="padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto">
 
   <!-- Revenue chart + Tool trends -->
   <div class="grid-2">
     <div>
       <div class="sec-head">Revenue — last 30 days</div>
       <div class="chart-wrap">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
-          <span style="font-size:11px;color:#444">ℏ per day</span>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+          <span style="font-size:11px;color:#444">ℏ per day (hover for amount)</span>
           <span style="font-size:11px;color:#4ade80" id="chart-total"></span>
         </div>
         <div class="chart-bars" id="revenue-chart"></div>
+        <div id="chart-hover-label" style="font-size:11px;color:#4ade80;margin-top:6px;min-height:14px;text-align:center"></div>
       </div>
     </div>
     <div>
@@ -660,8 +661,10 @@ async function loadAll() {
           const h = Math.max(4, Math.round((hbar / maxRev) * 76));
           const lbl = d.date.slice(5).replace('-','/');
           const amt = hbar > 0 ? (hbar < 0.01 ? hbar.toFixed(4) : hbar.toFixed(2)) : '0';
-          return \`<div class="chart-bar-col" title="\${d.date}\n\${d.hbar} ℏ · \${d.calls} calls">
-            <div class="b" style="height:\${h}px" data-amt="\${amt}"></div>
+          return \`<div class="chart-bar-col"
+            onmouseenter="document.getElementById('chart-hover-label').textContent='\${d.date}: \${d.hbar} ℏ \\u00b7 \${d.calls} calls'"
+            onmouseleave="document.getElementById('chart-hover-label').textContent=''">
+            <div class="b" style="height:\${h}px"></div>
             <div class="lbl">\${lbl}</div>
           </div>\`;
         }).join('');
