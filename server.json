@@ -1,13 +1,13 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
   "name": "io.github.mountainmystic/hederatoolbox",
-  "version": "3.2.0",
-  "description": "Hedera ecosystem intelligence for AI agents. 20 tools, pay per call in HBAR. HITL enforced.",
+  "version": "3.4.2",
+  "description": "Hedera blockchain intelligence for AI agents. 20 tools across 6 modules — HCS, compliance, identity, token, governance, contracts. Pay per call in HBAR. No registration. Send HBAR to the platform wallet, your Hedera account ID becomes your API key.",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@hederatoolbox/platform",
-      "version": "3.2.0",
+      "version": "3.4.2",
       "transport": {
         "type": "streamable-http",
         "url": "https://api.hederatoolbox.com/mcp"
