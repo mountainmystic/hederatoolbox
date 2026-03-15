@@ -1,13 +1,13 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
   "name": "io.github.mountainmystic/hederatoolbox",
-  "version": "3.4.3",
+  "version": "3.4.4",
   "description": "Hedera blockchain intelligence for AI agents. 20 tools, 6 modules. Pay per call in HBAR. No registration required.",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@hederatoolbox/platform",
-      "version": "3.4.3",
+      "version": "3.4.4",
       "transport": {
         "type": "streamable-http",
         "url": "https://api.hederatoolbox.com/mcp"
