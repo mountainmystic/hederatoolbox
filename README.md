@@ -262,7 +262,7 @@ Accepts both Hedera native IDs (`0.0.123456`) and EVM addresses (`0x...`).
 
 ## Changelog
 
-**v3.4.4** — Agent examples improved (whale cooldown, compliance verify step, due diligence --save flag), xagent persona rewrite, npm README updated
+**v3.4.5** — Agent examples improved (whale cooldown, compliance verify step, due diligence --save flag), xagent persona rewrite, npm README updated
 
 **v3.4.2** — X agent (Telegram-gated autonomous tweet drafting), agent examples added to repo
 
