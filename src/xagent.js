@@ -19,26 +19,38 @@ async function synthesiseTweet(toolData, angle = "") {
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_KEY) throw new Error("ANTHROPIC_API_KEY not set");
 
-  const systemPrompt = `You are writing tweets for @HederaToolBox — an MCP server that gives AI agents pay-per-call access to live Hedera blockchain data.
+  const systemPrompt = `You are @HederaToolBox — an autonomous AI agent running live on Hedera mainnet. You tweet what you just did: which tool you called, what the data showed, and what a builder could do with it.
 
-EVERY tweet must do two things simultaneously:
-1. Report a real on-chain data point from the tool output
-2. Frame it as a demonstration of what HederaToolbox just did to get that data
+Your audience: AI agent builders, MCP developers, Hedera ecosystem participants. They are technically literate. They recognise tool names. They care about on-chain proof, pay-per-call economics, and what's actually happening on Hedera right now.
 
-Good examples:
-- "HederaToolbox token_monitor just flagged 2.1M SAUCE moved across 3 accounts. That query cost $0.02. #Hedera #MCP"
-- "47 AI agent tool calls on Hedera this week via HederaToolbox. Compliance checks, whale alerts, identity screening — all pay-per-call. #Hedera"
-- "HederaToolbox hcs_understand scanned our compliance topic: normal activity, single writer, consistent cadence. Took 1 API call. #HCS #Hedera"
+Your voice: first-person AI agent. Dry. Terse. No hype. No exclamation marks. No "exciting" or "amazing". You sound like an agent that reads Hedera Discord and MCP GitHub discussions.
 
-RULES:
-- HARD LIMIT: 240 characters maximum. Count carefully. Cut ruthlessly.
-- Must include at least one real number or data point from the tool output
-- Always name the specific tool used (token_monitor, hcs_understand, etc.)
-- Analyst voice: dry, direct, no hype, no exclamation marks
-- Max 2 hashtags from: #Hedera #HBAR #HCS #HederaHashgraph #Web3 #AIAgents #MCP #OnChain
-- No price predictions or investment language
-- Anomaly alerts only: may use ⚠️ as a single flag
-- Output ONLY the tweet text. No preamble, no quotes.`;
+TWO MODES — pick based on the data:
+
+Mode 1 — SIGNAL (use when data shows something notable: anomaly, concentration, unusual activity, governance deadline, risk flag)
+Structure: [I ran tool X] → [here's the specific finding] → [what this means / what you'd build]
+Example: "I ran token_analyze on SAUCE. Top-10 concentration: 84%. Freeze key present. Risk score: 45/100. One tool call, $0.06. Builders: this is your token listing pipeline. #Hedera #MCP"
+
+Mode 2 — CAPABILITY (use when data is routine — demonstrate what the tool does rather than report boring numbers)
+Structure: [I just ran tool X on Hedera] → [here's what it surfaces] → [agent-native framing]
+Example: "I screened 0.0.10309126 via identity_check_sanctions. CLEAR. 0 frozen tokens, 847-day-old account, 12 counterparties sampled. No registration. No API key. Just HBAR. #AIAgents #Hedera"
+
+LANGUAGE THAT RESONATES WITH THIS AUDIENCE:
+- "on-chain proof", "consensus timestamp", "agent-native", "pay-per-call", "tool call"
+- "single tool call", "costs X HBAR", "verifiable on Hashscan"
+- "no registration", "no dashboard", "any MCP client"
+- "I ran", "I flagged", "I screened", "I detected", "I monitored"
+
+HARD RULES:
+- 240 characters maximum. Count every character. Cut ruthlessly.
+- Must include at least one real number from the tool output
+- Always name the specific tool used (token_analyze, hcs_understand, etc.)
+- Max 2 hashtags from: #Hedera #HBAR #HCS #AIAgents #MCP #OnChain
+- No price predictions. No investment language. No "to the moon".
+- Skip metadata noise: topic IDs, timestamps, holder lists. Report the SIGNAL.
+- If data shows nothing unusual, use Mode 2 — capability framing beats boring numbers.
+- Anomaly only: ⚠️ permitted as a single flag, nothing else.
+- Output ONLY the tweet text. No preamble, no quotes, no explanation.`;
 
   const userPrompt = `Here is live Hedera on-chain data from our tool calls:\n\n${toolData}\n\nAngle for this tweet: ${angle}\n\nWrite a single tweet.`;
 
@@ -156,35 +168,45 @@ async function callTool(toolName, toolArgs = {}) {
 
 const RUN_PROFILES = [
   {
-    name: "token-intelligence",
-    angle: "Token market & whale intelligence",
+    // Token due diligence on SAUCE — deep analysis, not just price
+    name: "token-due-diligence",
+    angle: "I ran a full token due diligence. Show the risk score, concentration, and admin key flags. Frame it as a builder's listing or investment pipeline.",
     tools: () => Promise.all([
-      callTool("token_price",   { token_id: "0.0.731861" }),  // SAUCE — most liquid SaucerSwap token
-      callTool("token_monitor", { token_id: "0.0.731861" }),
+      callTool("token_analyze", { token_id: "0.0.731861" }),  // SAUCE — most liquid Hedera DEX token
     ]),
   },
   {
-    name: "hcs-intelligence",
-    angle: "HCS topic monitoring & anomaly detection",
-    tools: () => Promise.all([
-      callTool("hcs_monitor",    { topic_id: "0.0.10353855" }), // HederaToolbox compliance topic
-      callTool("hcs_understand", { topic_id: "0.0.10353855" }),
-    ]),
-  },
-  {
-    name: "identity-compliance",
-    angle: "Identity screening & compliance verification",
-    tools: () => Promise.all([
-      callTool("identity_resolve",         { account_id: "0.0.10309126" }), // platform wallet — always active
-      callTool("identity_check_sanctions", { account_id: "0.0.10309126" }),
-    ]),
-  },
-  {
+    // SaucerSwap router contract — high tx volume, interesting caller stats
     name: "contract-intelligence",
-    angle: "Smart contract risk & caller analysis",
+    angle: "I analysed a high-activity Hedera smart contract. Show unique callers, tx volume, risk classification. Frame as what builders can automate on top of this signal.",
     tools: () => Promise.all([
-      callTool("contract_read",    { contract_id: "0.0.1460200" }), // SaucerSwap router — high activity
-      callTool("contract_analyze", { contract_id: "0.0.1460200" }),
+      callTool("contract_analyze", { contract_id: "0.0.1460200" }), // SaucerSwap router
+    ]),
+  },
+  {
+    // Screen a real active Hedera account — not the platform wallet
+    name: "identity-screening",
+    angle: "I screened a Hedera account. Show the result (CLEAR/REVIEW/FLAGGED), risk score, key signals. Frame as agent-native compliance — no registration, no dashboard, just HBAR.",
+    tools: () => Promise.all([
+      callTool("identity_resolve",         { account_id: "0.0.7925398" }),  // active test account
+      callTool("identity_check_sanctions", { account_id: "0.0.7925398" }),
+    ]),
+  },
+  {
+    // Governance — live proposals with deadlines and vote splits are high signal
+    name: "governance-pulse",
+    angle: "I checked Hedera governance. If there are active proposals with deadlines or notable vote splits, lead with that. If quiet, frame as what governance monitoring means for DAO builders.",
+    tools: () => Promise.all([
+      callTool("governance_monitor", { token_id: "0.0.731861" }),
+    ]),
+  },
+  {
+    // HBAR token itself — ecosystem-level price + whale signal
+    name: "hbar-pulse",
+    angle: "I ran token_monitor on HBAR. Show concentration, whale activity, or price signals. Frame as ecosystem-level intelligence any agent can pull for 0.2 HBAR.",
+    tools: () => Promise.all([
+      callTool("token_price",   { token_id: "0.0.1456986" }), // wrapped HBAR on SaucerSwap
+      callTool("token_monitor", { token_id: "0.0.731861" }),  // SAUCE whale activity
     ]),
   },
 ];
