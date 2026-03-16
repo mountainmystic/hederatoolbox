@@ -6,6 +6,7 @@
 
 [![npm](https://img.shields.io/npm/v/@hederatoolbox/platform?label=npm)](https://www.npmjs.com/package/@hederatoolbox/platform)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-listed-blue)](https://registry.modelcontextprotocol.io)
+[![ClawHub](https://img.shields.io/badge/ClawHub-hederatoolbox-orange)](https://clawhub.ai/mountainmystic/hederatoolbox)
 [![Network](https://img.shields.io/badge/Hedera-Mainnet-8A2BE2)](https://hedera.com)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE.md)
 
@@ -152,6 +153,22 @@ Restart Claude Desktop after saving the config.
 > npm install -g @hederatoolbox/platform
 > ```
 
+**OpenClaw / ClawHub**
+
+Install the HederaToolbox skill directly from ClawHub:
+
+```bash
+clawhub install mountainmystic/hederatoolbox
+```
+
+Then add your Hedera account ID to your OpenClaw environment:
+
+```
+HEDERA_ACCOUNT_ID=0.0.YOUR_ACCOUNT_ID
+```
+
+Skill listing: [clawhub.ai/mountainmystic/hederatoolbox](https://clawhub.ai/mountainmystic/hederatoolbox)
+
 **Cursor / other MCP-compatible clients**
 Use the endpoint URL directly in your MCP server config.
 
@@ -284,6 +301,7 @@ Accepts both Hedera native IDs (`0.0.123456`) and EVM addresses (`0x...`).
 |---|---|
 | npm | https://www.npmjs.com/package/@hederatoolbox/platform |
 | MCP Registry | https://registry.modelcontextprotocol.io/?q=hederatoolbox |
+| ClawHub | https://clawhub.ai/mountainmystic/hederatoolbox |
 | Live endpoint | https://api.hederatoolbox.com/mcp |
 | Terms | https://api.hederatoolbox.com/terms |
 
@@ -316,5 +334,3 @@ HederaToolbox has a permanent platform identity record written to Hedera mainnet
 | Transaction | `0.0.10309126@1773623419.733217779` |
 | Written | 16 March 2026 |
 | Verify | [hashscan.io/mainnet/topic/0.0.10353855](https://hashscan.io/mainnet/topic/0.0.10353855) |
-
-
