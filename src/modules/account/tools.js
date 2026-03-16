@@ -91,8 +91,8 @@ async function getAccountInfo(args) {
       step_2: "Your Hedera account ID becomes your API key automatically.",
       step_3: "Pass your Hedera account ID as the api_key parameter in any tool call.",
       step_4: "Call account_info with your api_key at any time to check your balance.",
-      minimum_deposit: "No minimum. Even 1 HBAR gives you many tool calls.",
-      note: "Balances are persistent. Unused credit carries over indefinitely.",
+      minimum_deposit: "Minimum deposit: 0.1 HBAR. Deposits below 0.1 HBAR are silently ignored — no account is created and no balance is credited. Recommended starting deposit: 5–10 HBAR for comfortable exploration of all tools.",
+      note: "Balances are persistent. Unused credit carries over indefinitely. You can top up at any time by sending more HBAR to the platform wallet.",
     },
 
     platform_wallet: {

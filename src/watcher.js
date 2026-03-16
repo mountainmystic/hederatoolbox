@@ -81,7 +81,10 @@ async function pollDeposits() {
       const depositTinybars = incomingTransfers.reduce((sum, t) => sum + t.amount, 0);
 
       // Skip zero-value or dust transfers (e.g. staking reward redistribution entries)
-      if (depositTinybars <= 0) continue;
+      // Minimum 0.1 HBAR (10,000,000 tinybars) — deposits below this are silently ignored.
+      // No account is created, no balance is credited, no Telegram notification is sent.
+      const MIN_DEPOSIT_TINYBARS = 10_000_000;
+      if (depositTinybars < MIN_DEPOSIT_TINYBARS) continue;
 
       // Find the real sender — the non-system account with the largest outgoing amount.
       // Using reduce (not find) ensures we pick the primary payer even when multiple
