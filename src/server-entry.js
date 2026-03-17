@@ -515,7 +515,7 @@ function getDashboardHTML() {
           <span style="font-size:11px;color:#444">ℏ per day (hover for amount)</span>
           <span style="font-size:11px;color:#4ade80" id="chart-total"></span>
         </div>
-        <div class="chart-bars" id="revenue-chart"></div>
+        <svg id="revenue-chart" width="100%" height="80" style="display:block;overflow:visible"></svg>
         <div id="chart-hover-label" style="font-size:11px;color:#4ade80;margin-top:6px;min-height:14px;text-align:center"></div>
       </div>
     </div>
@@ -531,6 +531,7 @@ function getDashboardHTML() {
   </div>
 
   <!-- Tool ranking + Top spenders -->
+  <div style="height:12px"></div>
   <div class="grid-2">
     <div>
       <div class="sec-head">Tool Ranking — all time</div>
@@ -553,6 +554,7 @@ function getDashboardHTML() {
   </div>
 
   <!-- Accounts + Recent transactions -->
+  <div style="height:12px"></div>
   <div class="grid-2">
     <div>
       <div class="sec-head">Accounts</div>
@@ -648,26 +650,53 @@ async function loadAll() {
     document.getElementById('watcher-dot').className = 'dot';
     document.getElementById('network-badge').textContent = stats.watcher.network;
 
-    // Revenue chart
+    // Revenue chart — SVG line chart
     const rev = analytics.daily_revenue;
-    const maxRev = Math.max(...rev.map(d => parseFloat(d.hbar)), 0.0001);
     const totalRev = rev.reduce((s, d) => s + parseFloat(d.hbar), 0);
     const chartTotal = document.getElementById('chart-total');
     if (chartTotal) chartTotal.textContent = totalRev.toFixed(4) + ' ℏ total';
-    document.getElementById('revenue-chart').innerHTML = rev.length === 0
-      ? '<div style="color:#333;font-size:12px;align-self:center">No data yet</div>'
-      : rev.map(d => {
-          const hbar = parseFloat(d.hbar);
-          const h = Math.max(4, Math.round((hbar / maxRev) * 76));
-          const lbl = d.date.slice(5).replace('-','/');
-          const amt = hbar > 0 ? (hbar < 0.01 ? hbar.toFixed(4) : hbar.toFixed(2)) : '0';
-          return \`<div class="chart-bar-col"
-            onmouseenter="document.getElementById('chart-hover-label').textContent='\${d.date}: \${d.hbar} ℏ \\u00b7 \${d.calls} calls'"
-            onmouseleave="document.getElementById('chart-hover-label').textContent=''">
-            <div class="b" style="height:\${h}px"></div>
-            <div class="lbl">\${lbl}</div>
-          </div>\`;
-        }).join('');
+    const svgEl = document.getElementById('revenue-chart');
+    if (rev.length === 0) {
+      svgEl.innerHTML = '<text x="50%" y="50%" fill="#333" font-size="12" text-anchor="middle" dominant-baseline="middle">No data yet</text>';
+    } else {
+      const W = svgEl.parentElement.clientWidth - 32 || 300;
+      const H = 80;
+      const pad = { top: 6, bottom: 16, left: 2, right: 2 };
+      svgEl.setAttribute('viewBox', \`0 0 \${W} \${H}\`);
+      const vals = rev.map(d => parseFloat(d.hbar));
+      const maxV = Math.max(...vals, 0.0001);
+      const xStep = (W - pad.left - pad.right) / Math.max(vals.length - 1, 1);
+      const yScale = v => pad.top + (1 - v / maxV) * (H - pad.top - pad.bottom);
+      const pts = vals.map((v, i) => [pad.left + i * xStep, yScale(v)]);
+      // Area fill
+      const areaPath = \`M\${pts[0][0]},\${H - pad.bottom} \` +
+        pts.map(([x,y]) => \`L\${x.toFixed(1)},\${y.toFixed(1)}\`).join(' ') +
+        \` L\${pts[pts.length-1][0]},\${H - pad.bottom} Z\`;
+      // Line
+      const linePath = pts.map(([x,y],i) => \`\${i===0?'M':'L'}\${x.toFixed(1)},\${y.toFixed(1)}\`).join(' ');
+      // Date labels — show first, middle, last
+      const labelIdxs = [0, Math.floor(rev.length/2), rev.length-1];
+      const labels = labelIdxs.map(i => {
+        const [x] = pts[i];
+        const lbl = rev[i].date.slice(5).replace('-','/');
+        return \`<text x="\${x.toFixed(1)}" y="\${H}" fill="#333" font-size="8" text-anchor="middle">\${lbl}</text>\`;
+      }).join('');
+      // Hover dots
+      const dots = pts.map(([x,y],i) => {
+        const d = rev[i];
+        const amt = parseFloat(d.hbar);
+        const tip = \`\${d.date}: \${amt > 0 ? (amt < 0.01 ? amt.toFixed(4) : amt.toFixed(2)) : '0'} ℏ · \${d.calls} calls\`;
+        return \`<circle cx="\${x.toFixed(1)}" cy="\${y.toFixed(1)}" r="3" fill="#4ade80" opacity="0"
+          onmouseenter="this.style.opacity=1;document.getElementById('chart-hover-label').textContent='\${tip}'"
+          onmouseleave="this.style.opacity=0;document.getElementById('chart-hover-label').textContent=''"
+          style="cursor:default;transition:opacity 0.15s"/>\`;
+      }).join('');
+      svgEl.innerHTML =
+        \`<defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4ade80" stop-opacity="0.18"/><stop offset="100%" stop-color="#4ade80" stop-opacity="0"/></linearGradient></defs>\` +
+        \`<path d="\${areaPath}" fill="url(#rg)"/>\` +
+        \`<path d="\${linePath}" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-linejoin="round"/>\` +
+        labels + dots;
+    }
 
     // Tool trends
     document.getElementById('tool-trends').innerHTML = analytics.tool_trends.length === 0
