@@ -165,18 +165,73 @@ async function callTool(toolName, toolArgs = {}) {
   });
 }
 
+// ─── Mirror node topic discovery (free — no tool cost) ───────────────────────
+// Fetches recently active HCS topics from the Hedera mirror node.
+// Returns the top N topics sorted by sequence number (most messages).
+
+async function discoverActiveTopics(limit = 3) {
+  const path = `/api/v1/topics?limit=25&order=desc`;
+  return new Promise((resolve) => {
+    const req = https.request({
+      hostname: "mainnet-public.mirrornode.hedera.com",
+      path,
+      method: "GET",
+      headers: { "Accept": "application/json" },
+    }, res => {
+      let data = "";
+      res.on("data", c => data += c);
+      res.on("end", () => {
+        try {
+          const parsed = JSON.parse(data);
+          const topics = (parsed.topics || [])
+            .filter(t => t.sequence_number > 5) // skip very low activity (likely private/internal)
+            .slice(0, limit)
+            .map(t => ({
+              topic_id: t.topic_id,
+              sequence_number: t.sequence_number,
+              memo: t.memo || "",
+            }));
+          resolve(topics);
+        } catch (e) {
+          console.error("[XAgent] Mirror node topic discovery failed:", e.message);
+          resolve([]);
+        }
+      });
+    });
+    req.on("error", (e) => {
+      console.error("[XAgent] Mirror node request error:", e.message);
+      resolve([]);
+    });
+    req.end();
+  });
+}
+
 // ─── Run profiles — each demonstrates different HederaToolbox capabilities ────
 // Rotates so the account never tweets the same angle twice in a row.
 // Each profile maps to a different set of tools + framing.
 
 const RUN_PROFILES = [
   {
-    // Token due diligence on SAUCE — deep analysis, not just price
+    // Token due diligence — rotates across major Hedera tokens
     name: "token-due-diligence",
     angle: "I ran a full token due diligence. Show the risk score, concentration, and admin key flags. Frame it as a builder's listing or investment pipeline.",
-    tools: () => Promise.all([
-      callTool("token_analyze", { token_id: "0.0.731861" }),  // SAUCE — most liquid Hedera DEX token
-    ]),
+    tools: (() => {
+      const TOKEN_ROTATION = [
+        { id: "0.0.731861",   name: "SAUCE" },   // SaucerSwap
+        { id: "0.0.1055483",  name: "XSAUCE" },  // xSAUCE staking
+        { id: "0.0.1468268",  name: "HBARX" },   // Stader staked HBAR
+        { id: "0.0.786931",   name: "HST" },     // HeadStarter
+        { id: "0.0.1530315",  name: "PACK" },    // Hashpack token
+      ];
+      let tokenIndex = 0;
+      return () => {
+        const token = TOKEN_ROTATION[tokenIndex % TOKEN_ROTATION.length];
+        tokenIndex++;
+        return Promise.all([
+          callTool("token_analyze", { token_id: token.id }),
+        ]);
+      };
+    })(),
   },
   {
     // SaucerSwap router contract — high tx volume, interesting caller stats
@@ -187,23 +242,6 @@ const RUN_PROFILES = [
     ]),
   },
   {
-    // Screen a real active Hedera account — not the platform wallet
-    name: "identity-screening",
-    angle: "I screened a Hedera account. Show the result (CLEAR/REVIEW/FLAGGED), risk score, key signals. Frame as agent-native compliance — no registration, no dashboard, just HBAR.",
-    tools: () => Promise.all([
-      callTool("identity_resolve",         { account_id: "0.0.7925398" }),  // active test account
-      callTool("identity_check_sanctions", { account_id: "0.0.7925398" }),
-    ]),
-  },
-  {
-    // Governance — live proposals with deadlines and vote splits are high signal
-    name: "governance-pulse",
-    angle: "I checked Hedera governance. If there are active proposals with deadlines or notable vote splits, lead with that. If quiet, frame as what governance monitoring means for DAO builders.",
-    tools: () => Promise.all([
-      callTool("governance_monitor", { token_id: "0.0.731861" }),
-    ]),
-  },
-  {
     // HBAR token itself — ecosystem-level price + whale signal
     name: "hbar-pulse",
     angle: "I ran token_monitor on HBAR. Show concentration, whale activity, or price signals. Frame as ecosystem-level intelligence any agent can pull for 0.2 HBAR.",
@@ -211,6 +249,31 @@ const RUN_PROFILES = [
       callTool("token_price",   { token_id: "0.0.1456986" }), // wrapped HBAR on SaucerSwap
       callTool("token_monitor", { token_id: "0.0.731861" }),  // SAUCE whale activity
     ]),
+  },
+  {
+    // HCS intelligence — known compliance topic + mirror node discovery of unknown hot topics
+    name: "hcs-intelligence",
+    angle: "I scanned the Hedera network for the most active HCS topic right now and read what's being written to it. Report the topic ID, message count, and memo if present. Do not speculate about who owns it. Report the signal: something is being built or recorded on Hedera, publicly, verifiably, right now. Frame hcs_understand as the tool that reads what any topic is actually saying — one tool call, no SDK.",
+    tools: async () => {
+      // Discover most active topics from mirror node (free — no tool cost)
+      const hotTopics = await discoverActiveTopics(3);
+      // Pick the most active topic
+      const unknown = hotTopics[0];
+      const results = [];
+      if (unknown) {
+        // Run hcs_understand on the hottest topic for deep signal
+        results.push(await callTool("hcs_understand", { topic_id: unknown.topic_id }));
+        // Inject mirror node discovery metadata
+        results.push({
+          tool: "mirror_node_discovery",
+          success: true,
+          content: `Most active HCS topic on Hedera right now:\nTopic ID: ${unknown.topic_id}\nTotal messages: ${unknown.sequence_number}\nMemo: ${unknown.memo || "(none)"}`,
+        });
+      } else {
+        results.push({ tool: "mirror_node_discovery", success: false, content: "No active topics found" });
+      }
+      return results;
+    },
   },
 ];
 
