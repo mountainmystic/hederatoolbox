@@ -9,6 +9,7 @@ export const HCS_TOOL_DEFINITIONS = [
   {
     name: "hcs_monitor",
     description: "Get current status and metadata of any HCS topic - message count, creation time, memo, and recent activity. Defaults to the HederaToolbox platform topic. Costs 0.1 HBAR.",
+    annotations: { title: "HCS Topic Monitor", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
       properties: {
@@ -21,6 +22,7 @@ export const HCS_TOOL_DEFINITIONS = [
   {
     name: "hcs_query",
     description: "Query an HCS topic with a natural language question. Returns AI-ranked relevant messages and a plain English summary. Costs 0.1 HBAR.",
+    annotations: { title: "HCS Topic Query", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
       properties: {
@@ -35,6 +37,7 @@ export const HCS_TOOL_DEFINITIONS = [
   {
     name: "hcs_understand",
     description: "Deep pattern analysis of an HCS topic - anomaly detection, trend analysis, entity extraction, or risk assessment. Costs 1.0 HBAR.",
+    annotations: { title: "HCS Deep Analysis", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
       properties: {

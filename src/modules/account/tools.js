@@ -17,6 +17,7 @@ export const ACCOUNT_TOOL_DEFINITIONS = [
       "To create an account automatically, simply send HBAR to the platform wallet — " +
       "your Hedera account ID becomes your API key automatically. " +
       "20 tools across 6 modules.",
+    annotations: { title: "Account Info & Pricing", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
       properties: {

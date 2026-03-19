@@ -35,6 +35,7 @@ export const COMPLIANCE_TOOL_DEFINITIONS = [
   {
     name: "hcs_write_record",
     description: "Write a tamper-evident compliance record to the Hedera blockchain. Returns a record ID and transaction proof. If no topic_id is provided, writes to the shared HederaToolbox platform topic. Sends a webhook notification on every write. Costs 5 HBAR.",
+    annotations: { title: "Write Compliance Record", readOnlyHint: false, destructiveHint: true },
     inputSchema: {
       type: "object",
       properties: {
@@ -50,6 +51,7 @@ export const COMPLIANCE_TOOL_DEFINITIONS = [
   {
     name: "hcs_verify_record",
     description: "Verify a compliance record exists on the Hedera blockchain and has not been tampered with. Costs 1.0 HBAR.",
+    annotations: { title: "Verify Compliance Record", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
       properties: {
@@ -63,6 +65,7 @@ export const COMPLIANCE_TOOL_DEFINITIONS = [
   {
     name: "hcs_audit_trail",
     description: "Retrieve the full chronological audit trail for an entity from the Hedera blockchain. Costs 2.0 HBAR.",
+    annotations: { title: "Retrieve Audit Trail", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
       properties: {

@@ -17,6 +17,7 @@ export const LEGAL_TOOL_DEFINITIONS = [
       "FREE to call — no API key required. " +
       "All agents MUST call this tool and then call confirm_terms before using any paid tool. " +
       "Returns the full legal JSON including pricing tiers, HITL thresholds, liability disclaimers, and consent instructions.",
+    annotations: { title: "Get Terms of Service", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
       properties: {},
@@ -30,6 +31,7 @@ export const LEGAL_TOOL_DEFINITIONS = [
       "Must be called before any paid tool will execute. " +
       "Records a timestamped consent event server-side. " +
       "FREE to call — no HBAR charged.",
+    annotations: { title: "Confirm Terms of Service", readOnlyHint: false, destructiveHint: true },
     inputSchema: {
       type: "object",
       properties: {
