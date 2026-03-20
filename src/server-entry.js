@@ -368,95 +368,159 @@ function getDashboardHTML() {
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #e0e0e0; min-height: 100vh; }
-  header { background: #111; border-bottom: 1px solid #222; padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
-  header h1 { font-size: 17px; font-weight: 600; color: #fff; }
+
+  /* ── Header ── */
+  header { background: #111; border-bottom: 1px solid #222; padding: 12px 16px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 50; }
+  header h1 { font-size: 16px; font-weight: 600; color: #fff; }
   .badge { background: #1a3a2a; color: #4ade80; font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid #2a5a3a; }
   .badge.amber { background: #2a2000; color: #fbbf24; border-color: #4a3a00; }
-  .btn { background: #1a1a1a; border: 1px solid #333; color: #888; padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+  #last-updated { font-size: 11px; color: #444; margin-left: auto; }
+  .btn { background: #1a1a1a; border: 1px solid #333; color: #888; padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; white-space: nowrap; }
   .btn:hover { color: #fff; border-color: #555; }
   .btn.danger { border-color: #4a1a1a; color: #f87171; }
   .btn.danger:hover { background: #2a0a0a; border-color: #ef4444; }
   .btn.green { border-color: #1a4a2a; color: #4ade80; }
   .btn.green:hover { background: #0a2a1a; }
-  #last-updated { font-size: 11px; color: #444; margin-left: auto; }
-  /* Layout */
-  .p { padding: 20px 24px; }
-  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media(max-width:900px){ .grid-5{ grid-template-columns: repeat(3,1fr); } .grid-3{ grid-template-columns:1fr 1fr; } .grid-2{ grid-template-columns:1fr; } }
-  @media(max-width:600px){ .grid-5{ grid-template-columns: 1fr 1fr; } }
-  /* Cards */
+
+  /* ── Hamburger (mobile only) ── */
+  #menu-btn { display: none; background: none; border: 1px solid #333; color: #888; padding: 5px 9px; border-radius: 6px; font-size: 16px; cursor: pointer; line-height: 1; }
+
+  /* ── Layout ── */
+  #layout { display: grid; grid-template-columns: 280px 1fr; min-height: calc(100vh - 49px); }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    border-right: 1px solid #1a1a1a;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+  }
+
+  /* ── Main panel ── */
+  #main { padding: 14px; overflow-y: auto; }
+
+  /* ── Cards ── */
   .card { background: #111; border: 1px solid #1e1e1e; border-radius: 8px; padding: 12px; }
   .card-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #555; margin-bottom: 6px; }
   .card-value { font-size: 26px; font-weight: 700; color: #fff; line-height: 1; }
   .card-sub { font-size: 11px; color: #444; margin-top: 5px; }
   .card-sub.up { color: #4ade80; } .card-sub.down { color: #f87171; }
-  /* Section headers */
-  .sec-head { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; display:flex; align-items:center; gap:8px; }
-  /* Tables */
+
+  /* ── Section header ── */
+  .sec-head { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+
+  /* ── Tables ── */
   .tbl { width: 100%; border-collapse: collapse; background: #111; border: 1px solid #1e1e1e; border-radius: 10px; overflow: hidden; }
   .tbl th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #444; padding: 9px 12px; border-bottom: 1px solid #1a1a1a; }
   .tbl td { padding: 8px 12px; font-size: 12px; border-bottom: 1px solid #161616; }
   .tbl tr:last-child td { border-bottom: none; }
-  .tbl tbody { max-height: 220px; }
   .tbl-scroll { max-height: 220px; overflow-y: auto; border: 1px solid #1e1e1e; border-radius: 10px; }
   .tbl-scroll table { border: none; border-radius: 0; }
-  /* Bar */
+
+  /* ── Bar ── */
   .bar-wrap { background: #1a1a1a; border-radius: 3px; height: 4px; width: 80px; }
   .bar { background: #4ade80; height: 4px; border-radius: 3px; }
-  /* Chart */
+
+  /* ── Chart ── */
   .chart-wrap { background: #111; border: 1px solid #1e1e1e; border-radius: 10px; padding: 16px; }
-  .chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 80px; }
-  .chart-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-  .chart-bar-col .b { background: #1e3a2a; border-radius: 2px 2px 0 0; width: 100%; transition: background 0.2s; cursor: default; }
-  .chart-bar-col .b:hover { background: #4ade80; }
-  .chart-bar-col .lbl { font-size: 8px; color: #333; }
-  /* Watcher dot */
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 5px #4ade80; display:inline-block; }
+
+  /* ── Watcher dot ── */
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 5px #4ade80; display: inline-block; }
   .dot.amber { background: #fbbf24; box-shadow: 0 0 5px #fbbf24; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
   .dot { animation: pulse 2s infinite; }
-  /* Mono */
+
+  /* ── Misc ── */
   .mono { font-family: monospace; font-size: 11px; }
-  /* Trend badge */
   .trend { font-size: 10px; padding: 1px 5px; border-radius: 4px; }
   .trend.up { background: #0a2a1a; color: #4ade80; }
   .trend.dn { background: #2a0a0a; color: #f87171; }
   .trend.flat { background: #1a1a1a; color: #666; }
-  /* Modal */
-  .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center; }
-  .modal-bg.open { display:flex; }
-  .modal { background:#161616; border:1px solid #2a2a2a; border-radius:12px; padding:24px; width:360px; max-width:90vw; }
-  .modal h3 { font-size:14px; font-weight:600; margin-bottom:14px; }
-  .modal input { width:100%; background:#0a0a0a; border:1px solid #2a2a2a; color:#e0e0e0; padding:8px 10px; border-radius:6px; font-size:13px; margin-bottom:10px; }
-  .modal input:focus { outline:none; border-color:#4ade80; }
-  .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:4px; }
-  /* QR inline */
-  .qr-inline { display:flex; align-items:center; gap:12px; }
-  .qr-inline img { border-radius:6px; background:#fff; padding:4px; flex-shrink:0; }
-  /* Spacer */
-  .gap { height: 20px; }
-  /* Section */
-  .section { padding: 0 24px 20px; }
+  .qr-inline { display: flex; align-items: center; gap: 12px; }
+  .qr-inline img { border-radius: 6px; background: #fff; padding: 4px; flex-shrink: 0; }
+  input.ctrl { width: 100%; background: #0a0a0a; border: 1px solid #2a2a2a; color: #e0e0e0; padding: 7px 9px; border-radius: 6px; font-size: 12px; margin-bottom: 8px; }
+  input.ctrl:focus { outline: none; border-color: #4ade80; }
+
+  /* ── Modal ── */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: #161616; border: 1px solid #2a2a2a; border-radius: 12px; padding: 24px; width: 360px; max-width: 90vw; }
+  .modal h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; }
+  .modal input { width: 100%; background: #0a0a0a; border: 1px solid #2a2a2a; color: #e0e0e0; padding: 8px 10px; border-radius: 6px; font-size: 13px; margin-bottom: 10px; }
+  .modal input:focus { outline: none; border-color: #4ade80; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+
+  /* ── Drag-and-drop panels ── */
+  .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .panel {
+    border: 1px solid #1e1e1e;
+    border-radius: 10px;
+    background: #111;
+    padding: 14px;
+    cursor: grab;
+    transition: opacity 0.2s, border-color 0.2s;
+    min-width: 0;
+  }
+  .panel:active { cursor: grabbing; }
+  .panel.dragging { opacity: 0.4; border-color: #4ade80; }
+  .panel.drag-over { border-color: #4ade80; border-style: dashed; }
+  .panel-handle { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; user-select: none; }
+  .panel-handle::before { content: "⠿"; color: #333; font-size: 14px; }
+  .panel-full { grid-column: 1 / -1; }
+
+  /* ── Mobile sidebar overlay ── */
+  #sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 40; }
+
+  /* ── Responsive breakpoints ── */
+  @media (max-width: 900px) {
+    #menu-btn { display: block; }
+    #layout { grid-template-columns: 1fr; }
+    #sidebar {
+      position: fixed;
+      top: 49px;
+      left: 0;
+      bottom: 0;
+      width: 280px;
+      z-index: 45;
+      background: #0f0f0f;
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      border-right: 1px solid #2a2a2a;
+    }
+    #sidebar.open { transform: translateX(0); }
+    #sidebar-overlay.open { display: block; }
+    .panel-grid { grid-template-columns: 1fr; }
+    .panel-full { grid-column: auto; }
+  }
+  @media (max-width: 600px) {
+    header { padding: 10px 12px; }
+    header h1 { font-size: 14px; }
+    #last-updated { display: none; }
+    #main { padding: 10px; }
+  }
 </style>
 </head>
 <body>
+
 <header>
+  <button id="menu-btn" onclick="toggleSidebar()" title="Menu">☰</button>
   <h1>HederaToolbox</h1>
   <span class="badge" id="network-badge">mainnet</span>
   <span class="dot" id="watcher-dot" style="margin-left:4px"></span>
   <span id="last-updated"></span>
-  <button class="btn" onclick="loadAll()">Refresh</button>
+  <button class="btn" onclick="loadAll()" style="margin-left:8px">Refresh</button>
 </header>
 
-<!-- Main layout: left sidebar controls + right data panel -->
-<div style="display:grid;grid-template-columns:280px 1fr;gap:0;min-height:calc(100vh - 49px)">
+<div id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- LEFT: Controls -->
-<div style="border-right:1px solid #1a1a1a;padding:16px;display:flex;flex-direction:column;gap:10px">
+<div id="layout">
 
-  <!-- KPI stack -->
+<!-- ── Sidebar ── -->
+<div id="sidebar">
+
+  <!-- KPIs -->
   <div class="card"><div class="card-label">Total Calls</div><div class="card-value" id="kpi-calls">—</div></div>
   <div class="card"><div class="card-label">Accounts</div><div class="card-value" id="kpi-accounts">—</div><div class="card-sub" id="kpi-avg-calls"></div></div>
   <div class="card"><div class="card-label">Total Deposited</div><div class="card-value" id="kpi-deposited">—</div><div class="card-sub">ℏ received</div></div>
@@ -471,12 +535,12 @@ function getDashboardHTML() {
     <div class="card"><div class="card-label">Last Active</div><div class="card-value" style="font-size:15px" id="xa-last">—</div></div>
   </div>` : ''}
 
-  <!-- Provision / Top Up -->
+  <!-- Provision -->
   <div style="border-top:1px solid #1a1a1a;padding-top:10px">
     <div class="sec-head">Provision / Top Up</div>
-    <div style="font-size:11px;color:#444;margin-bottom:8px">Add balance to any internal account key.</div>
-    <input id="ctrl-key" placeholder="API key (e.g. xagent-internal)" style="width:100%;background:#0a0a0a;border:1px solid #2a2a2a;color:#e0e0e0;padding:7px 9px;border-radius:6px;font-size:12px;margin-bottom:8px">
-    <input id="ctrl-hbar" placeholder="HBAR amount" type="number" style="width:100%;background:#0a0a0a;border:1px solid #2a2a2a;color:#e0e0e0;padding:7px 9px;border-radius:6px;font-size:12px;margin-bottom:10px">
+    <div style="font-size:11px;color:#444;margin-bottom:8px">Add balance to any account key.</div>
+    <input id="ctrl-key" class="ctrl" placeholder="API key (e.g. xagent-internal)">
+    <input id="ctrl-hbar" class="ctrl" placeholder="HBAR amount" type="number">
     <button class="btn green" style="width:100%" onclick="doProvision()">Provision / Top Up</button>
     <div id="ctrl-result" style="font-size:11px;color:#4ade80;margin-top:8px;min-height:16px"></div>
   </div>
@@ -496,20 +560,20 @@ function getDashboardHTML() {
   <!-- GDPR delete -->
   <div style="border-top:1px solid #1a1a1a;padding-top:10px">
     <div class="sec-head">GDPR Delete Account</div>
-    <input id="del-key" placeholder="API key to delete" style="width:100%;background:#0a0a0a;border:1px solid #2a2a2a;color:#e0e0e0;padding:7px 9px;border-radius:6px;font-size:12px;margin-bottom:8px">
+    <input id="del-key" class="ctrl" placeholder="API key to delete">
     <button class="btn danger" style="width:100%" onclick="openDeleteModal()">Delete Account…</button>
     <div style="font-size:10px;color:#333;margin-top:6px">Removes all data across all tables.</div>
   </div>
 
-</div>
+</div><!-- end sidebar -->
 
-<!-- RIGHT: Data panels -->
-<div style="padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto">
+<!-- ── Main ── -->
+<div id="main">
+  <div class="panel-grid" id="panel-grid">
 
-  <!-- Revenue chart + Tool trends -->
-  <div class="grid-2">
-    <div>
-      <div class="sec-head">Revenue — last 30 days</div>
+    <!-- Panel: Revenue chart -->
+    <div class="panel panel-full" data-panel="revenue" draggable="true">
+      <div class="panel-handle">Revenue — last 30 days</div>
       <div class="chart-wrap">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
           <span style="font-size:11px;color:#444">ℏ per day (hover for amount)</span>
@@ -519,8 +583,10 @@ function getDashboardHTML() {
         <div id="chart-hover-label" style="font-size:11px;color:#4ade80;margin-top:6px;min-height:14px;text-align:center"></div>
       </div>
     </div>
-    <div>
-      <div class="sec-head">Tool Trends — 7d vs prev 7d</div>
+
+    <!-- Panel: Tool trends -->
+    <div class="panel" data-panel="trends" draggable="true">
+      <div class="panel-handle">Tool Trends — 7d vs prev 7d</div>
       <div class="tbl-scroll">
         <table class="tbl">
           <thead><tr><th>Tool</th><th>This 7d</th><th>Prev 7d</th><th></th></tr></thead>
@@ -528,13 +594,10 @@ function getDashboardHTML() {
         </table>
       </div>
     </div>
-  </div>
 
-  <!-- Tool ranking + Top spenders -->
-  <div style="height:12px"></div>
-  <div class="grid-2">
-    <div>
-      <div class="sec-head">Tool Ranking — all time</div>
+    <!-- Panel: Tool ranking -->
+    <div class="panel" data-panel="ranking" draggable="true">
+      <div class="panel-handle">Tool Ranking — all time</div>
       <div class="tbl-scroll">
         <table class="tbl">
           <thead><tr><th>#</th><th>Tool</th><th>Calls</th><th>Revenue</th><th></th></tr></thead>
@@ -542,8 +605,10 @@ function getDashboardHTML() {
         </table>
       </div>
     </div>
-    <div>
-      <div class="sec-head">Top Spenders</div>
+
+    <!-- Panel: Top spenders -->
+    <div class="panel" data-panel="spenders" draggable="true">
+      <div class="panel-handle">Top Spenders</div>
       <div class="tbl-scroll">
         <table class="tbl">
           <thead><tr><th>Account</th><th>Calls</th><th>HBAR</th></tr></thead>
@@ -551,13 +616,10 @@ function getDashboardHTML() {
         </table>
       </div>
     </div>
-  </div>
 
-  <!-- Accounts + Recent transactions -->
-  <div style="height:12px"></div>
-  <div class="grid-2">
-    <div>
-      <div class="sec-head">Accounts</div>
+    <!-- Panel: Accounts -->
+    <div class="panel" data-panel="accounts" draggable="true">
+      <div class="panel-handle">Accounts</div>
       <div class="tbl-scroll">
         <table class="tbl">
           <thead><tr><th>Account</th><th>Balance</th><th>Last Used</th><th></th></tr></thead>
@@ -565,8 +627,10 @@ function getDashboardHTML() {
         </table>
       </div>
     </div>
-    <div>
-      <div class="sec-head">Recent Transactions</div>
+
+    <!-- Panel: Recent transactions -->
+    <div class="panel" data-panel="txs" draggable="true">
+      <div class="panel-handle">Recent Transactions</div>
       <div class="tbl-scroll">
         <table class="tbl">
           <thead><tr><th>Time</th><th>Account</th><th>Tool</th><th>HBAR</th></tr></thead>
@@ -574,12 +638,10 @@ function getDashboardHTML() {
         </table>
       </div>
     </div>
-  </div>
 
-</div>
-</div><!-- end main layout -->
-
-<div style="height:40px"></div>
+  </div><!-- end panel-grid -->
+</div><!-- end main -->
+</div><!-- end layout -->
 
 <!-- Delete confirmation modal -->
 <div class="modal-bg" id="delete-modal">
@@ -596,6 +658,7 @@ function getDashboardHTML() {
 </div>
 
 <script>
+// ── Auth ──
 const SECRET = sessionStorage.getItem('hederatoolbox_admin_secret') || '';
 if (!SECRET) {
   const input = prompt('Admin secret:');
@@ -609,6 +672,69 @@ async function fetchJSON(path, opts = {}) {
   return r.json();
 }
 
+// ── Mobile sidebar toggle ──
+function toggleSidebar() {
+  const s = document.getElementById('sidebar');
+  const o = document.getElementById('sidebar-overlay');
+  s.classList.toggle('open');
+  o.classList.toggle('open');
+}
+
+// ── Drag-and-drop panel reordering ──
+const PANEL_ORDER_KEY = 'htb_panel_order';
+let dragSrc = null;
+
+function savePanelOrder() {
+  const grid = document.getElementById('panel-grid');
+  const order = [...grid.children].map(p => p.dataset.panel);
+  localStorage.setItem(PANEL_ORDER_KEY, JSON.stringify(order));
+}
+
+function restorePanelOrder() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PANEL_ORDER_KEY) || 'null');
+    if (!saved) return;
+    const grid = document.getElementById('panel-grid');
+    const panels = Object.fromEntries([...grid.children].map(p => [p.dataset.panel, p]));
+    saved.forEach(key => { if (panels[key]) grid.appendChild(panels[key]); });
+  } catch(e) {}
+}
+
+function initDragDrop() {
+  const grid = document.getElementById('panel-grid');
+  grid.querySelectorAll('.panel').forEach(panel => {
+    panel.addEventListener('dragstart', e => {
+      dragSrc = panel;
+      panel.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    panel.addEventListener('dragend', () => {
+      panel.classList.remove('dragging');
+      grid.querySelectorAll('.panel').forEach(p => p.classList.remove('drag-over'));
+      savePanelOrder();
+    });
+    panel.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (dragSrc && dragSrc !== panel) {
+        grid.querySelectorAll('.panel').forEach(p => p.classList.remove('drag-over'));
+        panel.classList.add('drag-over');
+      }
+    });
+    panel.addEventListener('drop', e => {
+      e.preventDefault();
+      if (dragSrc && dragSrc !== panel) {
+        const allPanels = [...grid.children];
+        const srcIdx = allPanels.indexOf(dragSrc);
+        const tgtIdx = allPanels.indexOf(panel);
+        if (srcIdx < tgtIdx) grid.insertBefore(dragSrc, panel.nextSibling);
+        else grid.insertBefore(dragSrc, panel);
+        panel.classList.remove('drag-over');
+      }
+    });
+  });
+}
+
+// ── Helpers ──
 function timeAgo(ts) {
   if (!ts) return '—';
   const d = (Date.now() - new Date(ts).getTime()) / 1000;
@@ -624,6 +750,7 @@ function pct(a, b) {
   return (p > 0 ? '+' : '') + p + '%';
 }
 
+// ── Data loader ──
 async function loadAll() {
   try {
     const [stats, accounts, txs, analytics] = await Promise.all([
@@ -646,11 +773,10 @@ async function loadAll() {
     mEl.textContent = mDelta + ' vs last month';
     mEl.className = 'card-sub ' + (mDelta.startsWith('+') ? 'up' : mDelta.startsWith('-') ? 'down' : '');
 
-    // Watcher dot
     document.getElementById('watcher-dot').className = 'dot';
     document.getElementById('network-badge').textContent = stats.watcher.network;
 
-    // Revenue chart — SVG line chart
+    // Revenue chart (SVG line)
     const rev = analytics.daily_revenue;
     const totalRev = rev.reduce((s, d) => s + parseFloat(d.hbar), 0);
     const chartTotal = document.getElementById('chart-total');
@@ -668,20 +794,16 @@ async function loadAll() {
       const xStep = (W - pad.left - pad.right) / Math.max(vals.length - 1, 1);
       const yScale = v => pad.top + (1 - v / maxV) * (H - pad.top - pad.bottom);
       const pts = vals.map((v, i) => [pad.left + i * xStep, yScale(v)]);
-      // Area fill
       const areaPath = \`M\${pts[0][0]},\${H - pad.bottom} \` +
         pts.map(([x,y]) => \`L\${x.toFixed(1)},\${y.toFixed(1)}\`).join(' ') +
         \` L\${pts[pts.length-1][0]},\${H - pad.bottom} Z\`;
-      // Line
       const linePath = pts.map(([x,y],i) => \`\${i===0?'M':'L'}\${x.toFixed(1)},\${y.toFixed(1)}\`).join(' ');
-      // Date labels — show first, middle, last
       const labelIdxs = [0, Math.floor(rev.length/2), rev.length-1];
       const labels = labelIdxs.map(i => {
         const [x] = pts[i];
         const lbl = rev[i].date.slice(5).replace('-','/');
         return \`<text x="\${x.toFixed(1)}" y="\${H}" fill="#333" font-size="8" text-anchor="middle">\${lbl}</text>\`;
       }).join('');
-      // Hover dots
       const dots = pts.map(([x,y],i) => {
         const d = rev[i];
         const amt = parseFloat(d.hbar);
@@ -734,7 +856,7 @@ async function loadAll() {
           <td style="color:#4ade80">\${s.hbar} ℏ</td>
         </tr>\`).join('');
 
-    // Accounts with delete button
+    // Accounts
     document.getElementById('accounts-table').innerHTML = accounts.accounts.length === 0
       ? '<tr><td colspan="4" style="color:#333">No accounts yet</td></tr>'
       : accounts.accounts.map(a => \`<tr>
@@ -744,7 +866,7 @@ async function loadAll() {
           <td><button class="btn danger" style="padding:2px 7px;font-size:10px" onclick="setDeleteKey('\${a.api_key}')">Del</button></td>
         </tr>\`).join('');
 
-    // Recent transactions (last 15)
+    // Recent transactions
     document.getElementById('recent-txs').innerHTML = txs.transactions.length === 0
       ? '<tr><td colspan="4" style="color:#333">No transactions yet</td></tr>'
       : txs.transactions.slice(0, 15).map(t => \`<tr>
@@ -754,7 +876,7 @@ async function loadAll() {
           <td style="color:#4ade80">\${(t.amount_tinybars/100000000).toFixed(4)}</td>
         </tr>\`).join('');
 
-    // X agent (if present)
+    // X agent
     if (analytics.xagent) {
       const xa = analytics.xagent;
       document.getElementById('xa-balance').textContent = xa.balance_hbar + ' ℏ';
@@ -767,7 +889,7 @@ async function loadAll() {
   } catch(e) { console.error('Dashboard error:', e); }
 }
 
-// Provision / top-up
+// ── Provision ──
 async function doProvision() {
   const key = document.getElementById('ctrl-key').value.trim();
   const hbar = parseFloat(document.getElementById('ctrl-hbar').value);
@@ -782,7 +904,7 @@ async function doProvision() {
   } catch(e) { el.style.color='#f87171'; el.textContent = e.message; }
 }
 
-// Delete modal
+// ── Delete modal ──
 function setDeleteKey(key) { document.getElementById('del-key').value = key; openDeleteModal(); }
 function openDeleteModal() {
   const key = document.getElementById('del-key').value.trim();
@@ -809,6 +931,9 @@ async function doDelete() {
   } catch(e) { el.style.color='#f87171'; el.textContent = e.message; }
 }
 
+// ── Init ──
+restorePanelOrder();
+initDragDrop();
 loadAll();
 setInterval(loadAll, 30000);
 </script>
