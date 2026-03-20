@@ -6,6 +6,7 @@
 
 [![npm](https://img.shields.io/npm/v/@hederatoolbox/platform?label=npm)](https://www.npmjs.com/package/@hederatoolbox/platform)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-listed-blue)](https://registry.modelcontextprotocol.io)
+[![Glama](https://img.shields.io/badge/Glama-listed-green)](https://glama.ai/mcp/servers/mountainmystic/hederatoolbox)
 [![ClawHub](https://img.shields.io/badge/ClawHub-hederatoolbox-orange)](https://clawhub.ai/mountainmystic/hederatoolbox)
 [![Network](https://img.shields.io/badge/Hedera-Mainnet-8A2BE2)](https://hedera.com)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE.md)
@@ -199,6 +200,7 @@ All safety controls run **server-side** and cannot be bypassed by modifying the 
 - **Consent gate** — `confirm_terms` required before any paid tool executes
 - **Atomic balance deduction** — balance check and deduct are a single SQL operation, race-condition proof
 - **Loop guard** — same tool called >20 times in 60s by the same key is blocked automatically
+- **No private keys** — we never see your private key and never ask for it. You authenticate with your Hedera account ID — a public identifier, like a username. Your key stays in your wallet.
 
 Terms of Service: `get_terms` tool or [/public/terms.json](https://api.hederatoolbox.com/public/terms.json)
 
@@ -301,9 +303,12 @@ Accepts both Hedera native IDs (`0.0.123456`) and EVM addresses (`0x...`).
 |---|---|
 | npm | https://www.npmjs.com/package/@hederatoolbox/platform |
 | MCP Registry | https://registry.modelcontextprotocol.io/?q=hederatoolbox |
+| Glama | https://glama.ai/mcp/servers/mountainmystic/hederatoolbox |
 | ClawHub | https://clawhub.ai/mountainmystic/hederatoolbox |
 | Live endpoint | https://api.hederatoolbox.com/mcp |
 | Terms | https://api.hederatoolbox.com/terms |
+
+> **Note:** The old package `@hederaintel/platform` is deprecated. Update your config to use `@hederatoolbox/platform`.
 
 ---
 
