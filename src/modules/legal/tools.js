@@ -12,11 +12,7 @@ const TERMS_VERSION = TERMS.consent.terms_version;
 export const LEGAL_TOOL_DEFINITIONS = [
   {
     name: "get_terms",
-    description:
-      "Retrieve the machine-readable Terms of Service for the HederaIntel MCP Platform. " +
-      "FREE to call — no API key required. " +
-      "All agents MUST call this tool and then call confirm_terms before using any paid tool. " +
-      "Returns the full legal JSON including pricing tiers, HITL thresholds, liability disclaimers, and consent instructions.",
+    description: "Machine-readable Terms of Service. FREE. Call before any paid tool, then confirm_terms.",
     annotations: { title: "Get Terms of Service", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
@@ -26,11 +22,7 @@ export const LEGAL_TOOL_DEFINITIONS = [
   },
   {
     name: "confirm_terms",
-    description:
-      "Confirm acceptance of the HederaIntel Terms of Service. " +
-      "Must be called before any paid tool will execute. " +
-      "Records a timestamped consent event server-side. " +
-      "FREE to call — no HBAR charged.",
+    description: "Accept Terms of Service. Required before any paid tool executes. FREE.",
     annotations: { title: "Confirm Terms of Service", readOnlyHint: false, destructiveHint: true },
     inputSchema: {
       type: "object",

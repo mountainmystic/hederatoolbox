@@ -11,7 +11,7 @@ function getMirrorNodeBase() {
 export const GOVERNANCE_TOOL_DEFINITIONS = [
   {
     name: "governance_monitor",
-    description: "Monitor active governance proposals for a Hedera token or DAO. Returns open proposals, voting deadlines, and current vote tallies. Provide topic_id for best results — without it, only token metadata is returned. Costs 0.2 HBAR.",
+    description: "Active governance proposals for a Hedera token or DAO: open proposals, deadlines, vote tallies. 0.2 HBAR.",
     annotations: { title: "Governance Monitor", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
@@ -25,7 +25,7 @@ export const GOVERNANCE_TOOL_DEFINITIONS = [
   },
   {
     name: "governance_analyze",
-    description: "Deep analysis of a governance proposal including voter sentiment, participation rate, token concentration, and outcome prediction. Costs 1.0 HBAR.",
+    description: "Governance proposal analysis: voter sentiment, participation, concentration, outcome prediction. 1.0 HBAR.",
     annotations: { title: "Governance Proposal Analysis", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",

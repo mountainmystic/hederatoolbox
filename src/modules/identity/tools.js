@@ -35,7 +35,7 @@ async function resolveAccountInput(input, base) {
 export const IDENTITY_TOOL_DEFINITIONS = [
   {
     name: "identity_resolve",
-    description: "Resolve a Hedera account ID or EVM address to its on-chain identity profile including account age, token holdings, transaction history, and any HCS-based identity records. Accepts both Hedera native IDs (0.0.123456) and EVM addresses (0x...). Costs 0.2 HBAR.",
+    description: "Resolve Hedera account ID or EVM address to on-chain profile: age, tokens, tx history. 0.2 HBAR.",
     annotations: { title: "Resolve Account Identity", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
@@ -48,7 +48,7 @@ export const IDENTITY_TOOL_DEFINITIONS = [
   },
   {
     name: "identity_verify_kyc",
-    description: "Check the KYC status of a Hedera account for one or more tokens. Returns KYC grant status and verification history. Accepts both Hedera native IDs (0.0.123456) and EVM addresses (0x...). Costs 0.5 HBAR.",
+    description: "KYC status of a Hedera account for one or more tokens. 0.5 HBAR.",
     annotations: { title: "Verify KYC Status", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
@@ -62,7 +62,7 @@ export const IDENTITY_TOOL_DEFINITIONS = [
   },
   {
     name: "identity_check_sanctions",
-    description: "Screen a Hedera account against on-chain risk signals including transaction patterns, counterparty risk, and known flagged accounts. Accepts both Hedera native IDs (0.0.123456) and EVM addresses (0x...). Costs 1.0 HBAR.",
+    description: "Sanctions and risk screening for a Hedera account: tx patterns, counterparty risk. 1.0 HBAR.",
     annotations: { title: "Sanctions & Risk Screening", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",

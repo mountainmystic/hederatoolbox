@@ -8,7 +8,7 @@ const PLATFORM_TOPIC = process.env.HCS_COMPLIANCE_TOPIC_ID || "0.0.10305125";
 export const HCS_TOOL_DEFINITIONS = [
   {
     name: "hcs_monitor",
-    description: "Get current status and metadata of any HCS topic - message count, creation time, memo, and recent activity. Defaults to the HederaToolbox platform topic. Costs 0.1 HBAR.",
+    description: "HCS topic status: message count, creation time, memo. Defaults to platform topic. 0.1 HBAR.",
     annotations: { title: "HCS Topic Monitor", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
@@ -21,7 +21,7 @@ export const HCS_TOOL_DEFINITIONS = [
   },
   {
     name: "hcs_query",
-    description: "Query an HCS topic with a natural language question. Returns AI-ranked relevant messages and a plain English summary. Costs 0.1 HBAR.",
+    description: "Natural language query on an HCS topic. Returns ranked messages and summary. 0.1 HBAR.",
     annotations: { title: "HCS Topic Query", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
@@ -36,7 +36,7 @@ export const HCS_TOOL_DEFINITIONS = [
   },
   {
     name: "hcs_understand",
-    description: "Deep pattern analysis of an HCS topic - anomaly detection, trend analysis, entity extraction, or risk assessment. Costs 1.0 HBAR.",
+    description: "Deep HCS topic analysis: anomaly detection, trends, entity extraction, risk. 1.0 HBAR.",
     annotations: { title: "HCS Deep Analysis", readOnlyHint: true, destructiveHint: false },
     inputSchema: {
       type: "object",
