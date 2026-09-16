@@ -69,15 +69,31 @@ export function parseAgentDid(did) {
   }
 
   const decoded = base58Decode(multibase.slice(1));
-  const expectedLength = ED25519_MULTICODEC_PREFIX.length + ED25519_PUBLIC_KEY_BYTES;
-  if (decoded.length !== expectedLength) {
-    throw new Error(`agent_did key decodes to ${decoded.length} bytes, expected ${expectedLength}`);
-  }
-  if (decoded[0] !== ED25519_MULTICODEC_PREFIX[0] || decoded[1] !== ED25519_MULTICODEC_PREFIX[1]) {
-    throw new Error("agent_did key is not an Ed25519 public key (expected multicodec prefix 0xed01)");
+
+  // Fixatum's live /keygen and validatePublicKey (register.js, server.js — checked
+  // directly 2026-09-10, DID_FORMAT_FIX.md) issue and accept a BARE 32-byte raw
+  // Ed25519 public key, no multicodec wrapper. Every DID registered to date is in
+  // this form — treat it as the real, primary case. Also accept the W3C-style
+  // multicodec-prefixed 34-byte form (0xed01 + 32 bytes) for forward-compatibility,
+  // in case a future key generator ever produces it — not a format in live use today.
+  let rawPublicKey;
+  if (decoded.length === ED25519_PUBLIC_KEY_BYTES) {
+    rawPublicKey = decoded;
+  } else if (
+    decoded.length === ED25519_MULTICODEC_PREFIX.length + ED25519_PUBLIC_KEY_BYTES &&
+    decoded[0] === ED25519_MULTICODEC_PREFIX[0] &&
+    decoded[1] === ED25519_MULTICODEC_PREFIX[1]
+  ) {
+    rawPublicKey = decoded.subarray(ED25519_MULTICODEC_PREFIX.length);
+  } else {
+    throw new Error(
+      `agent_did key decodes to ${decoded.length} bytes — expected ${ED25519_PUBLIC_KEY_BYTES} ` +
+      `(Fixatum's raw format) or ${ED25519_MULTICODEC_PREFIX.length + ED25519_PUBLIC_KEY_BYTES} ` +
+      `with an 0xed01 multicodec prefix`
+    );
   }
 
-  return { multibase, accountId, rawPublicKey: decoded.subarray(ED25519_MULTICODEC_PREFIX.length) };
+  return { multibase, accountId, rawPublicKey };
 }
 
 // Recursively sort object keys at every depth. Arrays keep their order — order
