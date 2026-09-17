@@ -392,6 +392,13 @@ const toolAccessStmts = {
   allGrants: db.prepare(`SELECT * FROM tool_access ORDER BY granted_at DESC`),
 };
 
+// Tools that are implemented but withheld from the public tool list — visible
+// and callable only to accounts with an explicit grant (see tool_access table
+// below). Shared by server.js (filters ALL_TOOLS / list_tools) and
+// modules/account/tools.js (filters the account_info pricing table) so a tool
+// gated here is gated everywhere, not just from list_tools.
+export const GATED_TOOL_NAMES = new Set(["hcs_create_topic"]);
+
 // Grant an api_key access to a gated tool.
 export function grantToolAccess(apiKey, toolName, grantedBy = 'admin') {
   toolAccessStmts.grant.run(apiKey, toolName, grantedBy);

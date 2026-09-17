@@ -4,7 +4,7 @@
 // gets the platform wallet address, live pricing in HBAR and USD, sends HBAR, and is ready to go.
 
 import { COSTS } from "../../payments.js";
-import { getBalance, getAccount } from "../../db.js";
+import { getBalance, getAccount, GATED_TOOL_NAMES } from "../../db.js";
 import { getHbarPriceUsd, formatUsdCost } from "../../hbar-price.js";
 
 export const ACCOUNT_TOOL_DEFINITIONS = [
@@ -38,16 +38,22 @@ async function getAccountInfo(args) {
   // Fetch live HBAR/USD price (cached, 5 min TTL)
   const hbarPriceUsd = await getHbarPriceUsd();
 
-  // Build pricing table with live USD equivalents
-  const pricing = Object.entries(COSTS).map(([tool, cost]) => {
-    const hbarAmount = parseFloat(cost.hbar);
-    const entry = {
-      tool,
-      cost_hbar: cost.hbar,
-      cost_usd: formatUsdCost(hbarAmount, hbarPriceUsd),
-    };
-    return entry;
-  });
+  // Build pricing table with live USD equivalents.
+  // Gated tools (e.g. hcs_create_topic) are withheld from this free, no-auth
+  // endpoint the same way they're withheld from list_tools — otherwise their
+  // name and price would leak here even though they never appear in the
+  // tool list itself. See GATED_TOOL_NAMES in db.js.
+  const pricing = Object.entries(COSTS)
+    .filter(([tool]) => !GATED_TOOL_NAMES.has(tool))
+    .map(([tool, cost]) => {
+      const hbarAmount = parseFloat(cost.hbar);
+      const entry = {
+        tool,
+        cost_hbar: cost.hbar,
+        cost_usd: formatUsdCost(hbarAmount, hbarPriceUsd),
+      };
+      return entry;
+    });
 
   // Check balance if an api_key was provided
   let balanceInfo = null;

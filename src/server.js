@@ -11,11 +11,13 @@ import { FIXATUM_TOOL_DEFINITIONS, FIXATUM_FLEET_TOOL_DEFINITIONS, executeFixatu
 import { ACCOUNT_TOOL_DEFINITIONS, executeAccountTool } from "./modules/account/tools.js";
 import { LEGAL_TOOL_DEFINITIONS, executeLegalTool } from "./modules/legal/tools.js";
 import { checkConsent } from "./consent.js";
-import { logProvenance, getAgentDid, hasToolAccess } from "./db.js";
+import { logProvenance, getAgentDid, hasToolAccess, GATED_TOOL_NAMES } from "./db.js";
 
 // Gated tools — only visible and callable by authorised accounts.
 // These never appear in the public list_tools response.
-export const GATED_TOOL_NAMES = new Set(["hcs_create_topic"]);
+// GATED_TOOL_NAMES itself now lives in db.js so other modules (e.g. the
+// account_info pricing table) can filter against the same set without
+// importing this file and creating a circular dependency.
 export const GATED_TOOLS = COMPLIANCE_TOOL_DEFINITIONS.filter(t => GATED_TOOL_NAMES.has(t.name));
 
 // Public tool list — visible to all agents
