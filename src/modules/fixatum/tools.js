@@ -5,7 +5,7 @@ import { chargeForTool } from "../../payments.js";
 const FIXATUM_BASE = "https://did.fixatum.com";
 const FIXATUM_WALLET = "0.0.10394452";
 const FETCH_TIMEOUT_MS = 5000;
-const MIDAS_ACCOUNT = "0.0.10435510"; // only account authorised for fleet tools
+const MIDAS_ACCOUNT = "0.0.10435510"; // operator account — server.js also requires its api_secret (guard.js)
 const FIXATUM_ADMIN_SECRET = process.env.FIXATUM_ADMIN_SECRET;
 
 // ── Hedera SDK client (ECDSA, same pattern as compliance/tools.js) ────────────
@@ -41,12 +41,12 @@ async function fixatumGet(path, extraHeaders = {}) {
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
 
-// ── Fleet tools (Midas-only, free, server-side auth) ────────────────────────
+// ── Fleet tools (operator-only, free; api_key + api_secret enforced in server.js) ──
 export const FIXATUM_FLEET_TOOL_DEFINITIONS = [
   {
     name: "fixatum_fleet_status",
     description:
-      "Read all agent statuses and inbox count from the Fixatum agent communication layer. Returns latest report from each agent (VisionForge, Scout, Narrator) plus unresolved inbox item count. Free. Only callable by Midas (0.0.10435510).",
+      "Operator-only. Read agent statuses and unresolved inbox count from the Fixatum agent communication layer. Requires operator api_key and api_secret.",
     annotations: {
       title: "Fleet Agent Status",
       readOnlyHint: true,
@@ -57,16 +57,20 @@ export const FIXATUM_FLEET_TOOL_DEFINITIONS = [
       properties: {
         api_key: {
           type: "string",
-          description: "Your HederaToolbox API key. Must be Midas account (0.0.10435510).",
+          description: "Operator API key.",
+        },
+        api_secret: {
+          type: "string",
+          description: "Operator API secret.",
         },
       },
-      required: ["api_key"],
+      required: ["api_key", "api_secret"],
     },
   },
   {
     name: "fixatum_fleet_inbox",
     description:
-      "Read unresolved flagged items from the Fixatum agent inbox. Returns items posted by Scout, Narrator, or other agents requiring Midas attention. Free. Only callable by Midas (0.0.10435510).",
+      "Operator-only. Read unresolved items from the Fixatum agent inbox. Requires operator api_key and api_secret.",
     annotations: {
       title: "Fleet Agent Inbox",
       readOnlyHint: true,
@@ -77,10 +81,14 @@ export const FIXATUM_FLEET_TOOL_DEFINITIONS = [
       properties: {
         api_key: {
           type: "string",
-          description: "Your HederaToolbox API key. Must be Midas account (0.0.10435510).",
+          description: "Operator API key.",
+        },
+        api_secret: {
+          type: "string",
+          description: "Operator API secret.",
         },
       },
-      required: ["api_key"],
+      required: ["api_key", "api_secret"],
     },
   },
 ];
@@ -418,7 +426,7 @@ export async function executeFixatumTool(name, args) {
     const { api_key } = args;
     if (api_key !== MIDAS_ACCOUNT) {
       return {
-        error: "Access denied. fixatum_fleet_status is restricted to the Midas operator account.",
+        error: "Access denied. fixatum_fleet_status is restricted to the platform operator.",
         timestamp: new Date().toISOString(),
       };
     }
@@ -454,7 +462,7 @@ export async function executeFixatumTool(name, args) {
     const { api_key } = args;
     if (api_key !== MIDAS_ACCOUNT) {
       return {
-        error: "Access denied. fixatum_fleet_inbox is restricted to the Midas operator account.",
+        error: "Access denied. fixatum_fleet_inbox is restricted to the platform operator.",
         timestamp: new Date().toISOString(),
       };
     }

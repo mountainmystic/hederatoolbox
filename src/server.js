@@ -12,6 +12,12 @@ import { ACCOUNT_TOOL_DEFINITIONS, executeAccountTool } from "./modules/account/
 import { LEGAL_TOOL_DEFINITIONS, executeLegalTool } from "./modules/legal/tools.js";
 import { checkConsent } from "./consent.js";
 import { logProvenance, getAgentDid, hasToolAccess, GATED_TOOL_NAMES } from "./db.js";
+import { COSTS } from "./payments.js";
+import { checkProtectedAccount, stripSecret, checkSpendBreaker, didBelongsToKey } from "./guard.js";
+
+// Operator-only tools: callable only by a protected account that presented its
+// api_secret on this call (see guard.js). A public account ID is never enough.
+const OPERATOR_TOOLS = new Set(["fixatum_fleet_status", "fixatum_fleet_inbox"]);
 
 // Gated tools — only visible and callable by authorised accounts.
 // These never appear in the public list_tools response.
@@ -69,6 +75,16 @@ async function routeTool(name, args, req) {
   // ── API key validation ──────────────────────────────────────────────────────
   validateApiKey(args?.api_key, name);
 
+  // ── Protected accounts (guard.js) ───────────────────────────────────────────
+  // Throws if api_key is a protected account and api_secret is missing/wrong.
+  // The secret is stripped here so no tool module, log or provenance row sees it.
+  const { verified } = checkProtectedAccount(args?.api_key, args?.api_secret, name);
+  args = stripSecret(args);
+
+  if (OPERATOR_TOOLS.has(name) && !verified) {
+    throw new Error(`Tool "${name}" is restricted to the platform operator.`);
+  }
+
   // Legal tools (no consent check — they ARE the consent flow)
   if (["get_terms", "confirm_terms"].includes(name)) return executeLegalTool(name, args, req);
   if (name === "account_info") return executeAccountTool(name, args);
@@ -85,6 +101,10 @@ async function routeTool(name, args, req) {
 
   // ── Consent gate ────────────────────────────────────────────────────
   checkConsent(name, args);
+
+  // ── Spend circuit breaker (guard.js) ─────────────────────────────────────
+  // Paid tools only. Alert-only unless BREAKER_MODE=enforce.
+  if (COSTS[name]) checkSpendBreaker(args?.api_key, name, { verified });
 
   // ── Execute tool ──────────────────────────────────────────────────────
   let result;
@@ -136,7 +156,11 @@ async function routeTool(name, args, req) {
         resultStr.includes('"unusual_activity":true')          ? "unusual_activity" : null,
         resultStr.includes('"review"') && name === "identity_check_sanctions" ? "screening_review" : null,
       ].filter(Boolean).join(",") || null;
-      const resolvedDid = args?.agent_did || getAgentDid(args?.api_key) || null;
+      // A caller-supplied agent_did only counts when it belongs to this api_key
+      // (DID suffix == account ID). Stops activity being logged under, or
+      // against, someone else's DID.
+      const callerDid   = didBelongsToKey(args?.agent_did, args?.api_key) ? args.agent_did : null;
+      const resolvedDid = callerDid || getAgentDid(args?.api_key) || null;
       logProvenance(args?.api_key, name, inputsSummary, outputsSummary, riskFlags, resolvedDid);
     } catch { /* never propagate */ }
   });

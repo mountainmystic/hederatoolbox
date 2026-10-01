@@ -13,6 +13,7 @@ const TERMS = JSON.parse(readFileSync(path.join(__dirname, "../legal/terms.json"
 const { version: VERSION } = JSON.parse(readFileSync(path.join(__dirname, "../package.json"), "utf-8"));
 import { startWatcher } from "./watcher.js";
 import { handleTelegramUpdate, registerWebhook } from "./telegram.js";
+import { checkProtectedAccount, didBelongsToKey, unfreezeKey, listFrozenKeys } from "./guard.js";
 // scheduleVisionForge disabled — decommissioned 2026-06-25
 // import { scheduleVisionForge } from "./visionforge.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -383,10 +384,29 @@ const httpServer = http.createServer(async (req, res) => {
     } catch (e) { return json(res, 500, { error: e.message }); }
   }
 
+  // ── Spend breaker admin (guard.js) ──────────────────────────────────────────
+  // GET  /admin/frozen            → keys currently frozen by the breaker
+  // POST /admin/unfreeze {api_key} → lift a freeze early
+  if (req.method === "GET" && url.pathname === "/admin/frozen") {
+    if (!isAdmin(req)) return json(res, 401, { error: "Unauthorized" });
+    return json(res, 200, { frozen: listFrozenKeys() });
+  }
+  if (req.method === "POST" && url.pathname === "/admin/unfreeze") {
+    if (!isAdmin(req)) return json(res, 401, { error: "Unauthorized" });
+    try {
+      const { api_key } = JSON.parse(await readBody(req));
+      if (!api_key) return json(res, 400, { error: "api_key required" });
+      return json(res, 200, { success: true, unfrozen: unfreezeKey(api_key) });
+    } catch (e) { return json(res, 500, { error: e.message }); }
+  }
+
   // Agent self-identification — binds a Fixatum DID to an api_key permanently.
   // Called by agents autonomously: POST /identify { api_key, agent_did }
   // Requires a valid account. No admin secret required — the agent owns the key.
   // DID format validated: must start with did:hedera:mainnet:
+  // Phase 1 (Oct 2026): the DID's account suffix must equal api_key, so nobody
+  // can bind their DID to someone else's key or someone else's DID to theirs.
+  // Protected accounts must also send api_secret (guard.js).
   if (req.method === "POST" && url.pathname === "/identify") {
     try {
       const body     = JSON.parse(await readBody(req));
@@ -396,6 +416,14 @@ const httpServer = http.createServer(async (req, res) => {
       }
       if (!agent_did.startsWith("did:hedera:mainnet:")) {
         return json(res, 400, { error: "agent_did must be a valid Fixatum DID (did:hedera:mainnet:...)" });
+      }
+      if (!didBelongsToKey(agent_did, api_key)) {
+        return json(res, 400, { error: "agent_did must end in _<api_key>: a DID can only be bound to its own Hedera account." });
+      }
+      try {
+        checkProtectedAccount(api_key, body.api_secret, "identify");
+      } catch (e) {
+        return json(res, 401, { error: e.message });
       }
       const bound = setAgentDid(api_key, agent_did);
       if (!bound) return json(res, 404, { error: "Account not found. Send HBAR to create an account first." });
