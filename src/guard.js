@@ -157,6 +157,15 @@ export function listFrozenKeys() {
   return guardStmts.listFrozen.all();
 }
 
+// ── Log safety ────────────────────────────────────────────────────────────────
+
+// Only print an api_key in logs when it is shaped like an account ID. Anything
+// else (e.g. a secret sent in the wrong field) is redacted, never logged.
+export function keyForLog(apiKey) {
+  if (!apiKey) return "none";
+  return /^\d+\.\d+\.\d+$/.test(String(apiKey)) ? apiKey : "[redacted: not an account ID]";
+}
+
 // ── 3. DID attribution ────────────────────────────────────────────────────────
 
 // A DID ends in _<hedera account id>. It only counts toward provenance for an

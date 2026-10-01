@@ -13,7 +13,7 @@ import { LEGAL_TOOL_DEFINITIONS, executeLegalTool } from "./modules/legal/tools.
 import { checkConsent } from "./consent.js";
 import { logProvenance, getAgentDid, hasToolAccess, GATED_TOOL_NAMES } from "./db.js";
 import { COSTS } from "./payments.js";
-import { checkProtectedAccount, stripSecret, checkSpendBreaker, didBelongsToKey } from "./guard.js";
+import { checkProtectedAccount, stripSecret, checkSpendBreaker, didBelongsToKey, keyForLog } from "./guard.js";
 
 // Operator-only tools: callable only by a protected account that presented its
 // api_secret on this call (see guard.js). A public account ID is never enough.
@@ -188,7 +188,7 @@ export function createServer(req) {
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
-    console.error(`[Tool] ${name} | key: ${args?.api_key || "none"}`);
+    console.error(`[Tool] ${name} | key: ${keyForLog(args?.api_key)}`);
 
     try {
       const result = await routeTool(name, args, req);

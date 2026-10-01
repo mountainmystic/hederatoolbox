@@ -14,7 +14,7 @@ const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
 const { InMemoryTransport } = await import("@modelcontextprotocol/sdk/inMemory.js");
 const { createServer } = await import("../src/server.js");
 const dbm = await import("../src/db.js");
-const { didBelongsToKey, stripSecret } = await import("../src/guard.js");
+const { didBelongsToKey, stripSecret, keyForLog } = await import("../src/guard.js");
 const terms = JSON.parse(fs.readFileSync(new URL("../legal/terms.json", import.meta.url),"utf8")).consent.terms_version;
 
 for (const k of ["0.0.10435510","0.0.10419731","0.0.555","0.0.777"]) {
@@ -69,6 +69,9 @@ check("ordinary key, low volume → not blocked by guard", !r.text.includes("pau
 check("didBelongsToKey: own DID", didBelongsToKey("did:hedera:mainnet:zABC_0.0.555","0.0.555"));
 check("didBelongsToKey: other DID rejected", !didBelongsToKey("did:hedera:mainnet:zABC_0.0.10435510","0.0.555"));
 check("didBelongsToKey: suffix trick rejected", !didBelongsToKey("did:hedera:mainnet:zABC_0.0.1555","0.0.555"));
+check("keyForLog keeps account IDs", keyForLog("0.0.555") === "0.0.555");
+check("keyForLog redacts non-account keys", !keyForLog("uJxSECRETvalue").includes("SECRET"));
+check("keyForLog handles missing", keyForLog(undefined) === "none");
 check("stripSecret removes api_secret", !("api_secret" in stripSecret({api_key:"x",api_secret:"y",z:1})));
 // provenance never contains the secret
 await new Promise(r => setTimeout(r, 300));
