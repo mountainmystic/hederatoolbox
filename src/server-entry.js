@@ -14,6 +14,11 @@ const { version: VERSION } = JSON.parse(readFileSync(path.join(__dirname, "../pa
 import { startWatcher } from "./watcher.js";
 import { handleTelegramUpdate, registerWebhook } from "./telegram.js";
 import { checkProtectedAccount, didBelongsToKey, unfreezeKey, listFrozenKeys } from "./guard.js";
+import { healthSnapshot, installProcessHandlers, registerJob, runJob } from "./health.js";
+import { startWatchdog, watchdogState, runCanaryNow } from "./watchdog.js";
+
+// Phase 2: stray rejections/exceptions alert via Telegram instead of dying silently.
+installProcessHandlers();
 // scheduleVisionForge disabled — decommissioned 2026-06-25
 // import { scheduleVisionForge } from "./visionforge.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -93,21 +98,33 @@ const httpServer = http.createServer(async (req, res) => {
   });
 
   if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
-    return json(res, 200, {
-      status: "ok",
-      service: "HederaToolbox — Hedera MCP Platform",
+    // Phase 2: status is "degraded" when any job is failing or overdue.
+    // Always HTTP 200 so a bad job never makes Railway restart-loop the service;
+    // monitors read the status field. Error text and watchdog detail are admin-only.
+    const admin = isAdmin(req);
+    const snap = healthSnapshot({
       version: VERSION,
-      network: process.env.HEDERA_NETWORK,
-      account: process.env.HEDERA_ACCOUNT_ID,
-      watcher_running: !!process.env.HEDERA_ACCOUNT_ID,
-      uptime_seconds: Math.floor((Date.now() - startTime) / 1000),
-      modules: ["hcs", "compliance", "governance", "token", "identity", "contract"],
-      tools: ALL_TOOLS.map((t) => t.name),
-      costs: getCosts(),
-      mcp_endpoint: "/mcp",
-      terms_endpoint: "/terms",
-      timestamp: new Date().toISOString(),
+      includeErrors: admin,
+      extra: {
+        network: process.env.HEDERA_NETWORK,
+        account: process.env.HEDERA_ACCOUNT_ID,
+        watcher_running: !!process.env.HEDERA_ACCOUNT_ID,
+        modules: ["hcs", "compliance", "governance", "token", "identity", "contract"],
+        tools: ALL_TOOLS.map((t) => t.name),
+        costs: getCosts(),
+        mcp_endpoint: "/mcp",
+        terms_endpoint: "/terms",
+        ...(admin ? { monitors: watchdogState() } : {}),
+      },
     });
+    return json(res, 200, { ...snap, service: "HederaToolbox — Hedera MCP Platform" });
+  }
+
+  // Phase 2: run the daily canary on demand (admin). Costs 0.1 HBAR only if CANARY_API_KEY is set.
+  if (req.method === "POST" && url.pathname === "/admin/canary") {
+    if (!isAdmin(req)) return json(res, 401, { error: "Unauthorized" });
+    await runCanaryNow();
+    return json(res, 200, watchdogState().canary || { note: "canary produced no result — check logs" });
   }
 
   if (req.method === "GET" && url.pathname === "/terms") {
@@ -1212,6 +1229,7 @@ httpServer.listen(port, () => {
 
 startWatcher();
 registerWebhook();
+startWatchdog();
 
 purgeOldConsentPII();
 
@@ -1228,7 +1246,7 @@ function scheduleDailyDigest() {
   console.error(`[Digest] First digest in ${Math.round(msUntil / 3600000)}h (08:00 UTC daily)`);
 
   async function sendDigest() {
-    try {
+    {
       const allTxs = getRecentTransactions(1000);
       const since  = new Date(Date.now() - 86_400_000).toISOString().slice(0, 19);
       const recent = allTxs.filter(t => t.timestamp >= since);
@@ -1257,14 +1275,14 @@ function scheduleDailyDigest() {
       );
       purgeOldConsentPII();
       console.error("[Digest] Daily digest sent");
-    } catch (e) {
-      console.error(`[Digest] Failed: ${e.message}`);
     }
   }
 
+  // Phase 2: runJob records success/failure for /health and alerts on failure.
+  registerJob("daily_digest", 24 * 60 * 60 * 1000);
   setTimeout(() => {
-    sendDigest();
-    setInterval(sendDigest, 24 * 60 * 60 * 1000);
+    runJob("daily_digest", sendDigest);
+    setInterval(() => runJob("daily_digest", sendDigest), 24 * 60 * 60 * 1000);
   }, msUntil);
 }
 
@@ -1328,6 +1346,7 @@ if (process.env.GITHUB_BACKUP_TOKEN && process.env.GITHUB_BACKUP_REPO) {
         });
       } catch (e) {
         console.error(`[Backup] ❌ Failed: ${e.message}`);
+        throw e; // Phase 2: let runJob record + alert
       }
     }
 
@@ -1337,8 +1356,13 @@ if (process.env.GITHUB_BACKUP_TOKEN && process.env.GITHUB_BACKUP_REPO) {
       if (next2am <= now) next2am.setUTCDate(next2am.getUTCDate() + 1);
       const msUntil2am = next2am - now;
       console.error(`[Backup] Next backup scheduled in ${Math.round(msUntil2am / 3600000)}h`);
-      setTimeout(() => { runBackup(); setInterval(runBackup, 24 * 60 * 60 * 1000); }, msUntil2am);
+      setTimeout(() => {
+        runJob("nightly_backup", runBackup);
+        setInterval(() => runJob("nightly_backup", runBackup), 24 * 60 * 60 * 1000);
+      }, msUntil2am);
     }
+
+    registerJob("nightly_backup", 24 * 60 * 60 * 1000);
 
     scheduleBackup();
   });

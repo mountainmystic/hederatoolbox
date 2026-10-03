@@ -33,7 +33,9 @@ function telegramRequest(method, payload) {
     }, res => {
       let data = "";
       res.on("data", c => data += c);
-      res.on("end", () => resolve(JSON.parse(data)));
+      // Phase 2: a non-JSON reply (e.g. Telegram 502 HTML page) used to throw here,
+      // inside an event handler — an uncaught exception that crashed the service.
+      res.on("end", () => { try { resolve(JSON.parse(data)); } catch { resolve(null); } });
     });
     req.on("error", reject);
     req.write(body);

@@ -7,6 +7,7 @@
 import axios from "axios";
 import { creditAccount, depositAlreadyProcessed, recordDeposit } from "./db.js";
 import { notifyDeposit, notifyWatcherError } from "./telegram.js";
+import { registerJob, jobSucceeded, jobFailed } from "./health.js";
 
 const PLATFORM_ACCOUNT = process.env.HEDERA_ACCOUNT_ID;   // e.g. 0.0.10298356
 const NETWORK          = process.env.HEDERA_NETWORK || "mainnet";
@@ -53,7 +54,7 @@ async function pollDeposits() {
     const response = await axios.get(url, { timeout: 10_000 });
     const transactions = response.data?.transactions || [];
 
-    if (transactions.length === 0) return;
+    if (transactions.length === 0) { jobSucceeded("deposit_watcher"); consecutiveFailures = 0; return; }
 
     let newLastTimestamp = lastTimestamp;
 
@@ -130,12 +131,16 @@ async function pollDeposits() {
 
     // Successful poll — reset failure counter
     consecutiveFailures = 0;
+    jobSucceeded("deposit_watcher");
 
   } catch (err) {
     // Log but never crash — the watcher must keep running even if the mirror
     // node is temporarily unavailable
     console.error(`[Watcher] Poll error: ${err.message}`);
     consecutiveFailures++;
+    // Phase 2: tracked for /health. Alerting stays with notifyWatcherError below
+    // (alertAfter set high so the two don't double-message).
+    jobFailed("deposit_watcher", err, { alertAfter: Infinity });
     if (consecutiveFailures === FAILURE_ALERT_THRESHOLD) {
       notifyWatcherError(
         `Mirror node poll has failed ${consecutiveFailures} times in a row.\n` +
@@ -167,6 +172,8 @@ export function startWatcher() {
   }
 
   console.error(`[Watcher] Starting — watching ${PLATFORM_ACCOUNT} on ${NETWORK} (${POLL_INTERVAL_MS / 1000}s interval)`);
+
+  registerJob("deposit_watcher", POLL_INTERVAL_MS);
 
   // Run immediately on start, then on interval
   pollDeposits();
